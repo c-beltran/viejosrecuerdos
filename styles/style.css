@@ -10,6 +10,37 @@
     --er: 0 91% 71%;
 }
 
+.sparkle-container {
+    position: relative;
+    display: inline-block;
+}
+
+.sparkle-animation::before, .sparkle-animation::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 10px 5px white;
+    animation: sparkle 1.5s linear infinite;
+}
+
+.sparkle-animation::after {
+    animation-delay: 0.75s; /* Stagger the animations */
+}
+
+@keyframes sparkle {
+    0% { transform: scale(0.5) translate(-100px, -50px); opacity: 0; }
+    25% { opacity: 1; }
+    50% { transform: scale(1) translate(100px, 80px); opacity: 1; }
+    75% { opacity: 1; }
+    100% { transform: scale(0.5) translate(-100px, -50px); opacity: 0; }
+}
+
 /* Use the Google Fonts */
 body {
     font-family: 'Lato', sans-serif;
