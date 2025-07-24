@@ -1,3 +1,15 @@
+:root, [data-theme="gildedhour"] {
+    --p: 21 33% 56%;
+    --s: 88 28% 70%;
+    --a: 98 28% 70%;
+    --n: 0 0% 29%;
+    --b1: 33 21% 88%;
+    --in: 198 93% 60%;
+    --su: 158 64% 52%;
+    --wa: 43 96% 56%;
+    --er: 0 91% 71%;
+}
+
 /* Use the Google Fonts */
 body {
     font-family: 'Lato', sans-serif;
