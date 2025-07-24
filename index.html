@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cupcake">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Gilded Hour Antiques</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.51.6/dist/full.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <div id="home" class="hero min-h-screen bg-base-200">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <img src="public/coreImages/viejos_recuerdos.jpeg" alt="Viejos Recuerdos Logo" class="mx-auto mb-8 w-48 md:w-64 rounded-lg shadow-2xl" />
+                <h1 class="mb-5 text-5xl font-bold font-serif">Descubre tesoros que cuentan una historia.</h1>
+                <p class="mb-5 font-sans">Antiguedades, mobiliario, y objetos únicos para el ojo discernido.</p>
+                <button id="explore-btn" class="btn btn-primary font-sans">Explora nuestra colección</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Us Section -->
+    <section id="about" class="py-20 bg-base-100">
+        <div class="container mx-auto px-4 md:px-0">
+            <div class="max-w-3xl mx-auto text-center">
+                <h2 class="text-4xl font-bold font-serif mb-8">Viejos Recuerdos</h2>
+                <p class="mb-4 font-sans">Somos un pulguero con mas de 40 años especializados en antigüedades.</p>
+                <br>
+                <button class="btn btn-primary font-sans"><a href="tel:+573157455643" class="text-white">LLamanos</a></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Items Section -->
+    <section id="featured" class="py-20 bg-base-200">
+        <div class="container mx-auto px-4 md:px-0">
+            <h2 class="text-4xl font-bold text-center font-serif mb-12">Ultimas Llegadas</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="card bg-base-100 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <figure><img src="public/inventario/Bandeja-bano-oro.jpeg" alt="bandeja con baño de oro" /></figure>
+                    <div class="card-body">
+                        <div class="badge badge-secondary">Recien Llegado</div>
+                        <h3 class="card-title font-serif">Bandeja con baño de oro</h3>
+                        <p class="font-sans">Una hermosa bandeja en muy buena condición.</p>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="card bg-base-100 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <figure><img src="public/inventario/coleccion-vajias.jpeg" alt="coleccion de vajias" /></figure>
+                    <div class="card-body">
+                        <div class="badge badge-secondary">Recien Llegado</div>
+                        <h3 class="card-title font-serif">Vajias de porcelana</h3>
+                        <p class="font-sans">Coleccion antigua de porcelana, completamente conservada.</p>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="card bg-base-100 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                  <figure><img src="public/inventario/crystal-murano-perros.jpeg" alt="crystal murano perros" /></figure>
+                  <div class="card-body">
+                      <div class="badge badge-secondary">Recien Llegado</div>
+                      <h3 class="card-title font-serif">Crystal Murano</h3>
+                      <p class="font-sans">Colleccion de perros de crystal murano, en excelente estado.</p>
+                  </div>
+              </div>
+                <!-- Card 4 -->
+                <div class="card bg-base-100 shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <figure><img src="public/inventario/mueble.jpeg" alt="mueble de cocina" /></figure>
+                    <div class="card-body">
+                        <div class="badge badge-neutral">Vendido</div>
+                        <h3 class="card-title font-serif">Mueble Tipo Riñonera</h3>
+                        <p class="font-sans">Mueble antiguo tipo riñonera, en excelente estado con apliques en bronce.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instagram Follow Section -->
+    <section id="instagram" class="py-20 bg-base-100">
+        <div class="container mx-auto text-center px-4 md:px-0">
+            <h2 class="text-4xl font-bold font-serif mb-4">Síguenos en Instagram</h2>
+            <p class="max-w-2xl mx-auto mb-8 font-sans">Para estar al tanto de nuestras últimas novedades y promociones.</p>
+            <a href="https://www.instagram.com/viejosrecuerdosbq1?igsh=MjJydWJpM3U5aGFq" class="btn btn-primary btn-lg transform hover:scale-105 transition-transform duration-300" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="mr-2" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.088 3.85.048 4.703.01 5.556 0 5.829 0 8s.01 2.444.048 3.297c.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.556 15.99 5.829 16 8 16s2.444-.01 3.297-.048c.852-.04 1.433-.174 1.942-.372.526-.205.972-.478 1.417-.923.445-.444.719-.891.923-1.417.198-.51.333-1.09.372-1.942C15.99 10.444 16 10.171 16 8s-.01-2.444-.048-3.297c-.04-.852-.174-1.433-.372-1.942a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.09-.333-1.942-.372C10.444.01 10.171 0 8 0zm0 1.442c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.282.24.705.275 1.486.039.843.047 1.096.047 3.232s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.486a2.5 2.5 0 0 1-.598.92c-.28.28-.546.453-.92.598-.282.11-.705.24-1.486.275-.843.039-1.096.047-3.232.047s-2.389-.008-3.232-.047c-.78-.035-1.203-.166-1.486-.275a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.598-.92c-.11-.282-.24-.705-.275-1.486-.039-.843-.047-1.096-.047-3.232s.008-2.389.047-3.232c.035-.78.166-1.204.275-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.486-.275.843-.039 1.096-.047 3.232-.047zM8 4.865a3.135 3.135 0 1 0 0 6.27 3.135 3.135 0 0 0 0-6.27zm0 5.136a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm4.865-6.082a.96.96 0 1 0 0-1.92.96.96 0 0 0 0 1.92z"/></svg>
+                @viejosrecuerdosbq1
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer p-10 bg-neutral text-neutral-content">
+        <div>
+            <span class="footer-title">Información de Contacto</span> 
+            <a class="link link-hover" href="https://www.google.com/maps/place/Cra.+43+%23+87-129,+Nte.+Centro+Historico,+Barranquilla,+Atl%C3%A1ntico,+Colombia/@11.000179,-74.8264977,19z/data=!4m15!1m8!3m7!1s0x8ef42d0068dbcb1d:0x5d659e85ef6983ef!2sCra.+43+%23+87-129,+Nte.+Centro+Historico,+Barranquilla,+Atl%C3%A1ntico,+Colombia!3b1!8m2!3d11.000179!4d-74.82528!16s%2Fg%2F11m62qfg1c!3m5!1s0x8ef42d0068dbcb1d:0x5d659e85ef6983ef!8m2!3d11.000179!4d-74.82528!16s%2Fg%2F11m62qfg1c?entry=ttu&g_ep=EgoyMDI1MDcyMS4wIKXMDSoASAFQAw%3D%3D" target="_blank">Cra. 43 # 87-129, Nte. Centro Historico, Barranquilla</a>
+             <a class="link link-hover" href="tel:+573157455643">Llamanos: 315 745 5643</a>
+            <a class="link link-hover" href="tel:+573155223459">O tambien: 315 522 3459</a>
+        </div> 
+        <div>
+            <span class="footer-title">Horarios de Atención</span> 
+            <p>Sábado: 10am - 6pm</p>
+            <p>Domingo: 10am - 5pm</p>
+        </div> 
+        <div>
+            <span class="footer-title">Redes Sociales</span> 
+            <div class="grid grid-flow-col gap-4">
+                <a href="https://www.instagram.com/viejosrecuerdosbq1?igsh=MjJydWJpM3U5aGFq" target="_blank" class="link link-hover"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.088 3.85.048 4.703.01 5.556 0 5.829 0 8s.01 2.444.048 3.297c.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.556 15.99 5.829 16 8 16s2.444-.01 3.297-.048c.852-.04 1.433-.174 1.942-.372.526-.205.972-.478 1.417-.923.445-.444.719-.891.923-1.417.198-.51.333-1.09.372-1.942C15.99 10.444 16 10.171 16 8s-.01-2.444-.048-3.297c-.04-.852-.174-1.433-.372-1.942a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.09-.333-1.942-.372C10.444.01 10.171 0 8 0zm0 1.442c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.282.24.705.275 1.486.039.843.047 1.096.047 3.232s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.486a2.5 2.5 0 0 1-.598.92c-.28.28-.546.453-.92.598-.282.11-.705.24-1.486.275-.843.039-1.096.047-3.232.047s-2.389-.008-3.232-.047c-.78-.035-1.203-.166-1.486-.275a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.598-.92c-.11-.282-.24-.705-.275-1.486-.039-.843-.047-1.096-.047-3.232s.008-2.389.047-3.232c.035-.78.166-1.204.275-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.486-.275.843-.039 1.096-.047 3.232-.047zM8 4.865a3.135 3.135 0 1 0 0 6.27 3.135 3.135 0 0 0 0-6.27zm0 5.136a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm4.865-6.082a.96.96 0 1 0 0-1.92.96.96 0 0 0 0 1.92z"/></svg></a> 
+                <a href="#" target="_blank" class="link link-hover"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="fill-current"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"></path></svg></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
