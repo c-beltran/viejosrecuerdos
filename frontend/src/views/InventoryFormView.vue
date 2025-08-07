@@ -230,12 +230,40 @@
               </div>
 
               <!-- Image Gallery -->
-              <div v-if="getValidImages(form.imageUrls).length > 0" class="space-y-3">
-                <h3 class="text-sm font-medium text-vintage-charcoal">Uploaded Images</h3>
+              <div v-if="hasImages" class="space-y-3">
+                <!-- Debug info -->
+                <div class="text-xs text-gray-500">
+                  Pending: {{ pendingImages.length }}, Existing: {{ existingImages.length }}
+                </div>
+                <h3 class="text-sm font-medium text-vintage-charcoal">Images</h3>
                 <div class="grid grid-cols-2 gap-3">
+                  <!-- Pending Images (for new items) -->
                   <div 
-                    v-for="(image, index) in getValidImages(form.imageUrls)" 
-                    :key="index"
+                    v-for="(file, index) in pendingImages" 
+                    :key="`pending-${index}`"
+                    class="relative group"
+                  >
+                    <img 
+                      :src="getFileUrl(file)" 
+                      :alt="`Pending image ${index + 1}`"
+                      class="w-full h-24 object-cover rounded-lg"
+                    />
+                    <div class="absolute top-1 left-1 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                      Pending
+                    </div>
+                    <button
+                      @click="removeImage(index)"
+                      class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      title="Remove image"
+                    >
+                      <X class="w-3 h-3" />
+                    </button>
+                  </div>
+                  
+                  <!-- Existing Images -->
+                  <div 
+                    v-for="(image, index) in existingImages" 
+                    :key="`existing-${index}`"
                     class="relative group"
                   >
                     <img 
@@ -244,7 +272,7 @@
                       class="w-full h-24 object-cover rounded-lg"
                     />
                     <button
-                      @click="removeImage(index)"
+                      @click="removeImage((pendingImages.length) + index)"
                       class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                       title="Remove image"
                     >
@@ -311,7 +339,7 @@ const isDragOver = ref(false)
 const uploadProgress = ref<Array<{ fileName: string; progress: number; status: 'uploading' | 'completed' | 'error'; error?: string }>>([])
 
 // Form data
-const form = ref<CreateInventoryItemRequest & { currentQuantity: number }>({
+const form = ref<CreateInventoryItemRequest & { currentQuantity: number; pendingImages?: File[] }>({
   itemName: '',
   descripcionArticulo: '',
   category: 'Mobiliario',
@@ -319,7 +347,8 @@ const form = ref<CreateInventoryItemRequest & { currentQuantity: number }>({
   currentQuantity: 1,
   unitPrice: 0,
   internalNotes: '',
-  imageUrls: []
+  imageUrls: [],
+  pendingImages: []
 })
 
 // Computed properties
@@ -330,6 +359,14 @@ const isEditing = computed(() => {
   return route.path.includes('/edit')
 })
 const itemId = computed(() => route.params.id as string)
+
+// Computed properties for images
+const pendingImages = computed(() => {
+  console.log('Pending images computed:', form.value.pendingImages)
+  return form.value.pendingImages || []
+})
+const existingImages = computed(() => getValidImages(form.value.imageUrls))
+const hasImages = computed(() => pendingImages.value.length > 0 || existingImages.value.length > 0)
 
 const categories = [
   'Mobiliario', 'Porcelana', 'Cristal', 'Joyeria', 'Arte', 'Libros', 
@@ -408,18 +445,51 @@ const uploadImage = async (file: File) => {
   uploadProgress.value.push(progressItem)
 
   try {
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      if (progressItem.progress < 90) {
-        progressItem.progress += 10
+    // For new items, we'll store the file temporarily and upload after item creation
+    if (!isEditing.value) {
+      // Store file for later upload
+      if (!form.value.pendingImages) {
+        form.value.pendingImages = []
       }
-    }, 100)
+      form.value.pendingImages.push(file)
+      console.log('Added pending image:', file.name, 'Total pending:', form.value.pendingImages.length)
+      console.log('Form pendingImages array:', form.value.pendingImages)
+      
+      // Force reactivity update
+      form.value.pendingImages = [...form.value.pendingImages]
+      
+      // Simulate progress for now
+      const progressInterval = setInterval(() => {
+        if (progressItem.progress < 90) {
+          progressItem.progress += 10
+        }
+      }, 100)
+      
+      setTimeout(() => {
+        clearInterval(progressInterval)
+        progressItem.progress = 100
+        progressItem.status = 'completed'
+        
+        // Remove progress item after a delay
+        setTimeout(() => {
+          const index = uploadProgress.value.findIndex(p => p.fileName === file.name)
+          if (index > -1) {
+            uploadProgress.value.splice(index, 1)
+          }
+        }, 2000)
+      }, 1000)
+      
+      toast.info(`${file.name} will be uploaded after item creation`)
+      
+      // The image will now show up in the gallery since we added it to pendingImages
+      return
+    }
 
-    const imageData = await inventoryStore.uploadImage(file, (progress) => {
+    // For editing existing items, upload immediately
+    const imageData = await inventoryStore.uploadImage(file, itemId.value, (progress) => {
       progressItem.progress = progress
     })
 
-    clearInterval(progressInterval)
     progressItem.progress = 100
     progressItem.status = 'completed'
 
@@ -441,7 +511,16 @@ const uploadImage = async (file: File) => {
 }
 
 const removeImage = (index: number) => {
-  form.value.imageUrls.splice(index, 1)
+  // Check if we're removing a pending image or an existing image
+  if (form.value.pendingImages && index < form.value.pendingImages.length) {
+    form.value.pendingImages.splice(index, 1)
+  } else {
+    // Adjust index for existing images
+    const existingImageIndex = form.value.pendingImages ? index - form.value.pendingImages.length : index
+    if (existingImageIndex >= 0 && existingImageIndex < form.value.imageUrls.length) {
+      form.value.imageUrls.splice(existingImageIndex, 1)
+    }
+  }
 }
 
 const getValidImages = (imageUrls: any[] | undefined) => {
@@ -451,6 +530,16 @@ const getValidImages = (imageUrls: any[] | undefined) => {
   return imageUrls.filter(img => 
     img && typeof img === 'object' && img.thumbnail && img.original
   )
+}
+
+const getFileUrl = (file: File | undefined) => {
+  if (!file) return ''
+  try {
+    return URL.createObjectURL(file)
+  } catch (err) {
+    console.error('Error creating object URL:', err)
+    return ''
+  }
 }
 
 const handleSubmit = async () => {
@@ -487,7 +576,45 @@ const handleSubmit = async () => {
         imageUrls: form.value.imageUrls
       }
       
-      await inventoryStore.createItem(createData)
+      console.log('Form submit - createData:', createData)
+      console.log('Form submit - calling inventoryStore.createItem')
+      
+      // Create the item first
+      const createdItem = await inventoryStore.createItem(createData)
+      console.log('Item created:', createdItem)
+      console.log('Created item ID:', createdItem?.itemId)
+      console.log('Created item type:', typeof createdItem)
+      
+      // Upload pending images if any
+      if (form.value.pendingImages && form.value.pendingImages.length > 0) {
+        console.log('Uploading pending images:', form.value.pendingImages.length)
+        
+        for (const file of form.value.pendingImages) {
+          try {
+            const uploadResponse = await inventoryStore.uploadImage(file, createdItem.itemId)
+            console.log('Image upload response:', uploadResponse)
+            
+            // Extract just the image data from the response
+            const imageData = uploadResponse.image || uploadResponse
+            console.log('Extracted image data:', imageData)
+            
+            // Add the uploaded image to the item's imageUrls
+            const updatedImageUrls = [...(createdItem.imageUrls || []), imageData]
+            
+            // Update the item with the new image
+            await inventoryStore.updateItem(createdItem.itemId, {
+              ...createData,
+              imageUrls: updatedImageUrls
+            })
+            
+            toast.success(`Image ${file.name} uploaded successfully`)
+          } catch (err) {
+            console.error('Failed to upload image:', file.name, err)
+            toast.error(`Failed to upload ${file.name}`)
+          }
+        }
+      }
+      
       toast.success('Item added successfully')
     }
 

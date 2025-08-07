@@ -8,7 +8,8 @@ const {
   updateItem,
   deleteItem,
   getInventoryStats,
-  getCategories
+  getCategories,
+  uploadImage
 } = require('../controllers/inventoryController');
 
 // Public routes (no authentication required)

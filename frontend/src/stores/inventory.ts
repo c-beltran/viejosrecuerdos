@@ -132,9 +132,12 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.post<InventoryItem>('/inventory', itemData)
       
       if (response.success && response.data) {
-        items.value.unshift(response.data)
+        console.log('Create item response data:', response.data)
+        // Handle nested data structure
+        const itemData = response.data.data || response.data
+        items.value.unshift(itemData)
         pagination.value.total += 1
-        return response.data
+        return itemData
       } else {
         throw new Error(response.error || 'Failed to create inventory item')
       }
@@ -210,27 +213,36 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   // Upload image for inventory item
-  const uploadImage = async (file: File, onProgress?: (progress: number) => void) => {
+  const uploadImage = async (file: File, itemId: string, onProgress?: (progress: number) => void) => {
     try {
       setLoading(true)
+      console.log('Uploading image to S3:', file.name, 'for itemId:', itemId)
       
-      // TODO: Implement image upload endpoint in backend
-      // For now, return a mock image data structure
-      const mockImageData = {
-        original: URL.createObjectURL(file),
-        medium: URL.createObjectURL(file),
-        thumbnail: URL.createObjectURL(file),
-        fileName: file.name,
-        metadata: {
-          size: file.size,
-          mimetype: file.type,
-          uploadDate: new Date().toISOString(),
-          originalName: file.name
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('image', file)
+      
+      // Upload to backend S3 endpoint using the correct path
+      console.log('Inventory store: About to upload to:', `/images/upload/${itemId}`)
+      console.log('Inventory store: FormData contents:', Array.from(formData.entries()))
+      
+      const response = await ApiService.uploadFile(`/images/upload/${itemId}`, formData, (progress) => {
+        if (onProgress) {
+          onProgress(progress)
         }
-      }
+      })
       
-      return mockImageData
+      console.log('S3 upload response:', response)
+      
+      if (response.success && response.data) {
+        // Handle nested response structure
+        const uploadData = response.data.data || response.data
+        return uploadData
+      } else {
+        throw new Error(response.error || 'Failed to upload image to S3')
+      }
     } catch (err) {
+      console.error('S3 upload error:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to upload image'
       setLoading(false, errorMessage)
       throw err

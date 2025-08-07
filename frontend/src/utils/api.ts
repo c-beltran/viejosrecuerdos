@@ -16,17 +16,25 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   async (config) => {
     console.log('API Interceptor: Request to:', config.url)
-    const authStore = useAuthStore()
-    const token = await authStore.getAuthToken()
+    console.log('API Interceptor: Request method:', config.method)
+    console.log('API Interceptor: Request headers:', config.headers)
     
-    console.log('API Interceptor: Token available:', !!token)
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-      console.log('API Interceptor: Authorization header set')
-    } else {
-      console.log('API Interceptor: No token available')
+    try {
+      const authStore = useAuthStore()
+      const token = await authStore.getAuthToken()
+      
+      console.log('API Interceptor: Token available:', !!token)
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+        console.log('API Interceptor: Authorization header set')
+      } else {
+        console.log('API Interceptor: No token available')
+      }
+    } catch (err) {
+      console.error('API Interceptor: Error getting auth token:', err)
     }
     
+    console.log('API Interceptor: Final config:', config)
     return config
   },
   (error) => {
@@ -110,9 +118,13 @@ export class ApiService {
   // Generic POST request
   static async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log('API Service: POST request to:', url)
+      console.log('API Service: POST data:', data)
       const response = await apiClient.post(url, data, config)
+      console.log('API Service: POST response received:', response.data)
       return response.data
     } catch (error) {
+      console.error('API Service: Error in POST request:', error)
       throw error
     }
   }
@@ -150,12 +162,12 @@ export class ApiService {
   // File upload with progress
   static async uploadFile<T>(
     url: string, 
-    file: File, 
+    formData: FormData, 
     onProgress?: (progress: number) => void
   ): Promise<ApiResponse<T>> {
     try {
-      const formData = new FormData()
-      formData.append('image', file)
+      console.log('API Service: Upload file to:', url)
+      console.log('API Service: FormData entries:', Array.from(formData.entries()))
       
       const response = await apiClient.post(url, formData, {
         headers: {
@@ -169,8 +181,10 @@ export class ApiService {
         }
       })
       
+      console.log('API Service: Upload response:', response.data)
       return response.data
     } catch (error) {
+      console.error('API Service: Upload error:', error)
       throw error
     }
   }
