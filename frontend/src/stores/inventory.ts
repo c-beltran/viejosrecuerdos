@@ -1,0 +1,375 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { 
+  InventoryItem, 
+  CreateInventoryItemRequest, 
+  UpdateInventoryItemRequest, 
+  InventoryFilters,
+  ApiResponse,
+  PaginatedResponse,
+  LoadingState,
+  PaginationState
+} from '@/types'
+import ApiService from '@/utils/api'
+
+export const useInventoryStore = defineStore('inventory', () => {
+  // State
+  const items = ref<InventoryItem[]>([])
+  const currentItem = ref<InventoryItem | null>(null)
+  const loading = ref<LoadingState>({
+    isLoading: false,
+    error: null
+  })
+  const pagination = ref<PaginationState>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0
+  })
+  const filters = ref<InventoryFilters>({
+    category: undefined,
+    status: undefined,
+    search: '',
+    limit: 20,
+    offset: 0,
+    includeQR: false
+  })
+
+  // Getters
+  const isLoading = computed(() => loading.value.isLoading)
+  const error = computed(() => loading.value.error)
+  const hasItems = computed(() => items.value.length > 0)
+  const totalItems = computed(() => pagination.value.total)
+  const currentFilters = computed(() => filters.value)
+
+  // Actions
+  const setLoading = (isLoading: boolean, error: string | null = null) => {
+    loading.value = { isLoading, error }
+  }
+
+  const clearError = () => {
+    loading.value.error = null
+  }
+
+  // Fetch all inventory items
+  const fetchItems = async (newFilters?: Partial<InventoryFilters>) => {
+    try {
+      setLoading(true)
+      console.log('Inventory store: fetchItems called')
+      
+      // Update filters if provided
+      if (newFilters) {
+        filters.value = { ...filters.value, ...newFilters }
+      }
+
+      // Build query parameters
+      const params = new URLSearchParams()
+      Object.entries(filters.value).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value))
+        }
+      })
+
+      const url = `/inventory?${params.toString()}`
+      console.log('Inventory store: calling API with URL:', url)
+      
+      const response = await ApiService.get<InventoryItem[]>(url)
+      console.log('Inventory store: API response:', response)
+      
+      if (response.success && response.data) {
+        // Handle nested data structure
+        const itemsData = response.data.data || response.data
+        items.value = itemsData
+        if (response.count !== undefined) {
+          pagination.value.total = response.count
+        }
+        console.log('Inventory store: items updated:', items.value)
+      } else {
+        throw new Error(response.error || 'Failed to fetch inventory items')
+      }
+    } catch (err) {
+      console.error('Inventory store: error fetching items:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory items'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch single inventory item
+  const fetchItem = async (itemId: string) => {
+    try {
+      setLoading(true)
+      console.log('Inventory store: fetchItem called for itemId:', itemId)
+      
+      const response = await ApiService.get<InventoryItem>(`/inventory/item/${itemId}`)
+      console.log('Inventory store: fetchItem response:', response)
+      
+      if (response.success && response.data) {
+        // Handle nested data structure
+        const itemData = response.data.data || response.data
+        currentItem.value = itemData
+        return itemData
+      } else {
+        throw new Error(response.error || 'Failed to fetch inventory item')
+      }
+    } catch (err) {
+      console.error('Inventory store: error fetching item:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Create new inventory item
+  const createItem = async (itemData: CreateInventoryItemRequest) => {
+    try {
+      setLoading(true)
+      
+      const response = await ApiService.post<InventoryItem>('/inventory', itemData)
+      
+      if (response.success && response.data) {
+        items.value.unshift(response.data)
+        pagination.value.total += 1
+        return response.data
+      } else {
+        throw new Error(response.error || 'Failed to create inventory item')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create inventory item'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Update inventory item
+  const updateItem = async (itemId: string, updateData: UpdateInventoryItemRequest) => {
+    try {
+      setLoading(true)
+      
+      const response = await ApiService.put<InventoryItem>(`/inventory/item/${itemId}`, updateData)
+      
+      if (response.success && response.data) {
+        // Update in items array
+        const index = items.value.findIndex(item => item.itemId === itemId)
+        if (index !== -1) {
+          items.value[index] = response.data
+        }
+        
+        // Update current item if it's the one being edited
+        if (currentItem.value?.itemId === itemId) {
+          currentItem.value = response.data
+        }
+        
+        return response.data
+      } else {
+        throw new Error(response.error || 'Failed to update inventory item')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update inventory item'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Delete inventory item
+  const deleteItem = async (itemId: string) => {
+    try {
+      setLoading(true)
+      
+      const response = await ApiService.delete(`/inventory/item/${itemId}`)
+      
+      if (response.success) {
+        // Remove from items array
+        items.value = items.value.filter(item => item.itemId !== itemId)
+        
+        // Clear current item if it's the one being deleted
+        if (currentItem.value?.itemId === itemId) {
+          currentItem.value = null
+        }
+        
+        pagination.value.total -= 1
+        return true
+      } else {
+        throw new Error(response.error || 'Failed to delete inventory item')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete inventory item'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Upload image for inventory item
+  const uploadImage = async (file: File, onProgress?: (progress: number) => void) => {
+    try {
+      setLoading(true)
+      
+      // TODO: Implement image upload endpoint in backend
+      // For now, return a mock image data structure
+      const mockImageData = {
+        original: URL.createObjectURL(file),
+        medium: URL.createObjectURL(file),
+        thumbnail: URL.createObjectURL(file),
+        fileName: file.name,
+        metadata: {
+          size: file.size,
+          mimetype: file.type,
+          uploadDate: new Date().toISOString(),
+          originalName: file.name
+        }
+      }
+      
+      return mockImageData
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload image'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Delete image from inventory item
+  const deleteImage = async (itemId: string, imageUrl: string) => {
+    try {
+      setLoading(true)
+      
+      // TODO: Implement image delete endpoint in backend
+      console.log('Delete image not implemented yet:', { itemId, imageUrl })
+      
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete image'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Generate QR code for inventory item
+  const generateQRCode = async (itemId: string) => {
+    try {
+      setLoading(true)
+      
+      // TODO: Implement QR code generation endpoint in backend
+      console.log('QR code generation not implemented yet for itemId:', itemId)
+      
+      // Mock QR code URL for now
+      const mockQRCodeUrl = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`
+      
+      return { qrCodeUrl: mockQRCodeUrl }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate QR code'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Get inventory statistics
+  const getStats = async () => {
+    try {
+      setLoading(true)
+      
+      const response = await ApiService.get('/inventory/stats')
+      
+      if (response.success) {
+        return response.data
+      } else {
+        throw new Error(response.error || 'Failed to fetch inventory statistics')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory statistics'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Get categories
+  const getCategories = async () => {
+    try {
+      const response = await ApiService.get('/inventory/categories')
+      
+      if (response.success) {
+        return response.data
+      } else {
+        throw new Error(response.error || 'Failed to fetch categories')
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch categories'
+      throw err
+    }
+  }
+
+  // Clear current item
+  const clearCurrentItem = () => {
+    currentItem.value = null
+  }
+
+  // Reset store
+  const reset = () => {
+    items.value = []
+    currentItem.value = null
+    loading.value = { isLoading: false, error: null }
+    pagination.value = {
+      page: 1,
+      limit: 20,
+      total: 0,
+      totalPages: 0
+    }
+    filters.value = {
+      category: undefined,
+      status: undefined,
+      search: '',
+      limit: 20,
+      offset: 0,
+      includeQR: false
+    }
+  }
+
+  return {
+    // State
+    items,
+    currentItem,
+    loading,
+    pagination,
+    filters,
+    
+    // Getters
+    isLoading,
+    error,
+    hasItems,
+    totalItems,
+    currentFilters,
+    
+    // Actions
+    setLoading,
+    clearError,
+    fetchItems,
+    fetchItem,
+    createItem,
+    updateItem,
+    deleteItem,
+    uploadImage,
+    deleteImage,
+    generateQRCode,
+    getStats,
+    getCategories,
+    clearCurrentItem,
+    reset
+  }
+}) 

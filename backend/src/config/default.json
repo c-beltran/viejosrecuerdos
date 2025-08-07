@@ -1,0 +1,18 @@
+{
+  "server": {
+    "port": 8000
+  },
+  "jwt": {
+    "secret": "your_jwt_secret"
+  },
+  "db": {
+    "url": "postgres://username:password@localhost:5432/viejosrecuerdos"
+  },
+  "aws": {
+    "accessKeyId": "",
+    "secretAccessKey": "",
+    "region": "us-east-1",
+    "bucketName": "",
+    "endpoint": ""
+  }
+}

@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-vintage-ivory text-vintage-charcoal;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .font-display {
+    font-family: 'Crimson Text', serif;
+  }
+  
+  .font-handwriting {
+    font-family: 'Dancing Script', cursive;
+  }
+}
+
+/* Custom component styles */
+@layer components {
+  .btn-antique {
+    @apply bg-antique-gold hover:bg-antique-bronze text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+  }
+  
+  .btn-antique-outline {
+    @apply border-2 border-antique-gold text-antique-gold hover:bg-antique-gold hover:text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+  }
+  
+  .card-antique {
+    @apply bg-white rounded-xl shadow-lg border border-vintage-beige hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+  
+  .card-antique-vintage {
+    @apply bg-vintage-cream rounded-xl shadow-lg border-2 border-antique-gold/20 hover:shadow-xl transition-all duration-300;
+  }
+  
+  .input-antique {
+    @apply w-full px-4 py-3 border-2 border-vintage-beige rounded-lg focus:border-antique-gold focus:ring-2 focus:ring-antique-gold/20 transition-all duration-200 bg-white;
+  }
+  
+  .select-antique {
+    @apply w-full px-4 py-3 border-2 border-vintage-beige rounded-lg focus:border-antique-gold focus:ring-2 focus:ring-antique-gold/20 transition-all duration-200 bg-white appearance-none;
+  }
+  
+  .badge-antique {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-antique-gold/10 text-antique-gold border border-antique-gold/20;
+  }
+  
+  .badge-vintage {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-vintage-sage/10 text-vintage-green border border-vintage-sage/20;
+  }
+  
+  .nav-link {
+    @apply flex items-center px-4 py-3 text-vintage-charcoal hover:text-antique-gold hover:bg-antique-gold/5 rounded-lg transition-all duration-200;
+  }
+  
+  .nav-link-active {
+    @apply flex items-center px-4 py-3 text-antique-gold bg-antique-gold/10 rounded-lg font-medium;
+  }
+  
+  .sidebar {
+    @apply bg-white border-r border-vintage-beige shadow-lg;
+  }
+  
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-vintage-beige shadow-lg z-50;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/80 border border-white/20;
+  }
+  
+  .vintage-border {
+    @apply border-2 border-dashed border-antique-gold/30;
+  }
+  
+  .antique-gradient {
+    background: linear-gradient(135deg, #D4AF37 0%, #CD7F32 50%, #B87333 100%);
+  }
+  
+  .vintage-gradient {
+    background: linear-gradient(135deg, #F5F5DC 0%, #FFFFF0 50%, #E8E8E8 100%);
+  }
+  
+  .text-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .image-hover {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-xl;
+  }
+  
+  .loading-spinner {
+    @apply animate-spin rounded-full border-4 border-vintage-beige border-t-antique-gold;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+  
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  .text-antique {
+    @apply text-antique-gold;
+  }
+  
+  .bg-antique {
+    @apply bg-antique-gold;
+  }
+  
+  .border-antique {
+    @apply border-antique-gold;
+  }
+  
+  .shadow-antique {
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15);
+  }
+  
+  .shadow-vintage {
+    box-shadow: 0 4px 20px rgba(139, 69, 19, 0.1);
+  }
+  
+  .backdrop-blur-antique {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 240, 0.9);
+  }
+  
+  .scrollbar-antique {
+    scrollbar-width: thin;
+    scrollbar-color: #D4AF37 #F5F5DC;
+  }
+  
+  .scrollbar-antique::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-antique::-webkit-scrollbar-track {
+    background: #F5F5DC;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-antique::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-antique::-webkit-scrollbar-thumb:hover {
+    background: #CD7F32;
+  }
+}
+
+/* Responsive utilities */
+@layer utilities {
+  .mobile-first {
+    @apply w-full;
+  }
+  
+  @screen sm {
+    .mobile-first {
+      @apply w-auto;
+    }
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break {
+    page-break-before: always;
+  }
+}
+
+/* Focus styles for accessibility */
+@layer base {
+  *:focus {
+    @apply outline-none ring-2 ring-antique-gold/50;
+  }
+  
+  button:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    @apply ring-2 ring-antique-gold/50;
+  }
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-auto {
+    @apply bg-vintage-charcoal text-vintage-ivory;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .btn-antique {
+    @apply border-2 border-black;
+  }
+  
+  .card-antique {
+    @apply border-2 border-black;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+} 
