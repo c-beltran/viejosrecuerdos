@@ -1,5 +1,39 @@
 <template>
   <div class="p-6">
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" @click="cancelDelete"></div>
+      <div class="relative bg-white rounded-xl shadow-xl p-6 max-w-md w-full">
+        <div class="text-center">
+          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Trash2 class="w-6 h-6 text-red-600" />
+          </div>
+          <h3 class="font-display text-lg text-vintage-charcoal mb-2">Delete Item</h3>
+          <p class="text-vintage-gray mb-4">
+            Are you sure you want to delete <strong>"{{ itemToDelete?.itemName }}"</strong>?
+          </p>
+          <p class="text-sm text-red-600 mb-6">
+            This action cannot be undone. All associated images and data will be permanently removed.
+          </p>
+          <div class="flex space-x-3">
+            <button 
+              @click="cancelDelete" 
+              class="flex-1 px-4 py-2 text-vintage-gray border border-vintage-beige rounded-lg hover:bg-vintage-beige transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              @click="confirmDelete" 
+              class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              :disabled="isDeleting"
+            >
+              <div v-if="isDeleting" class="loading-spinner w-4 h-4 mx-auto"></div>
+              <span v-else>Delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
       <div>
@@ -429,6 +463,11 @@ const viewMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
 const itemsPerPage = ref(12)
 
+// Delete modal state
+const showDeleteModal = ref(false)
+const itemToDelete = ref<InventoryItem | null>(null)
+const isDeleting = ref(false)
+
 // Filters
 const filters = ref<InventoryFilters>({
   category: '',
@@ -539,16 +578,29 @@ const toggleViewMode = () => {
   viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid'
 }
 
-const deleteItem = async (item: InventoryItem) => {
-  if (!confirm(`Are you sure you want to delete "${item.itemName}"? This action cannot be undone.`)) {
-    return
-  }
+const deleteItem = (item: InventoryItem) => {
+  itemToDelete.value = item
+  showDeleteModal.value = true
+}
+
+const cancelDelete = () => {
+  showDeleteModal.value = false
+  itemToDelete.value = null
+  isDeleting.value = false
+}
+
+const confirmDelete = async () => {
+  if (!itemToDelete.value) return
 
   try {
-    await inventoryStore.deleteItem(item.itemId)
+    isDeleting.value = true
+    await inventoryStore.deleteItem(itemToDelete.value.itemId)
     toast.success('Item deleted successfully')
+    cancelDelete()
   } catch (err) {
     toast.error('Failed to delete item')
+  } finally {
+    isDeleting.value = false
   }
 }
 
