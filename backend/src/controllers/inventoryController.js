@@ -78,6 +78,7 @@ const getAllItems = async (req, res) => {
       category: req.query.category,
       status: req.query.status,
       search: req.query.search,
+      friendlyId: req.query.friendlyId, // Search by friendly ID
       includeQR: req.query.includeQR === 'true',
       limit: parseInt(req.query.limit) || 50,
       offset: parseInt(req.query.offset) || 0
@@ -144,6 +145,66 @@ const getItemById = async (req, res) => {
   try {
     const { itemId } = req.params;
     const item = await inventoryService.getItemById(itemId);
+    
+    res.status(200).json({
+      success: true,
+      data: item
+    });
+  } catch (error) {
+    const statusCode = error.message === 'Item not found' ? 404 : 500;
+    res.status(statusCode).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /inventory/friendly/{friendlyId}:
+ *   get:
+ *     summary: Get inventory item by friendly ID
+ *     description: Retrieve a specific inventory item by its friendly ID (e.g., M0001, P0001)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: friendlyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^[MPCJALTDHURXO][0-9]{4}$'
+ *         description: Human-readable friendly ID of the inventory item
+ *     responses:
+ *       200:
+ *         description: Inventory item details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Inventory'
+ *       404:
+ *         description: Item not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+const getItemByFriendlyId = async (req, res) => {
+  try {
+    const { friendlyId } = req.params;
+    const item = await inventoryService.getItemByFriendlyId(friendlyId);
     
     res.status(200).json({
       success: true,
@@ -551,6 +612,7 @@ const getCategories = async (req, res) => {
 module.exports = {
   getAllItems,
   getItemById,
+  getItemByFriendlyId,
   createItem,
   updateItem,
   deleteItem,

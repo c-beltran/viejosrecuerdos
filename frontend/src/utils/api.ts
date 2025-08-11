@@ -15,26 +15,17 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async (config) => {
-    console.log('API Interceptor: Request to:', config.url)
-    console.log('API Interceptor: Request method:', config.method)
-    console.log('API Interceptor: Request headers:', config.headers)
-    
     try {
       const authStore = useAuthStore()
       const token = await authStore.getAuthToken()
       
-      console.log('API Interceptor: Token available:', !!token)
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
-        console.log('API Interceptor: Authorization header set')
-      } else {
-        console.log('API Interceptor: No token available')
       }
     } catch (err) {
       console.error('API Interceptor: Error getting auth token:', err)
     }
     
-    console.log('API Interceptor: Final config:', config)
     return config
   },
   (error) => {
@@ -105,9 +96,7 @@ export class ApiService {
   // Generic GET request
   static async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      console.log('API Service: GET request to:', url)
       const response = await apiClient.get(url, config)
-      console.log('API Service: Response received:', response.data)
       return response.data
     } catch (error) {
       console.error('API Service: Error in GET request:', error)
@@ -118,10 +107,7 @@ export class ApiService {
   // Generic POST request
   static async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      console.log('API Service: POST request to:', url)
-      console.log('API Service: POST data:', data)
       const response = await apiClient.post(url, data, config)
-      console.log('API Service: POST response received:', response.data)
       return response.data
     } catch (error) {
       console.error('API Service: Error in POST request:', error)
@@ -155,6 +141,7 @@ export class ApiService {
       const response = await apiClient.delete(url, config)
       return response.data
     } catch (error) {
+      console.error('API Service: Error in DELETE request:', error)
       throw error
     }
   }
@@ -166,9 +153,6 @@ export class ApiService {
     onProgress?: (progress: number) => void
   ): Promise<ApiResponse<T>> {
     try {
-      console.log('API Service: Upload file to:', url)
-      console.log('API Service: FormData entries:', Array.from(formData.entries()))
-      
       const response = await apiClient.post(url, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -181,7 +165,6 @@ export class ApiService {
         }
       })
       
-      console.log('API Service: Upload response:', response.data)
       return response.data
     } catch (error) {
       console.error('API Service: Upload error:', error)

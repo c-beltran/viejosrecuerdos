@@ -55,7 +55,6 @@ export const useInventoryStore = defineStore('inventory', () => {
   const fetchItems = async (newFilters?: Partial<InventoryFilters>) => {
     try {
       setLoading(true)
-      console.log('Inventory store: fetchItems called')
       
       // Update filters if provided
       if (newFilters) {
@@ -71,10 +70,8 @@ export const useInventoryStore = defineStore('inventory', () => {
       })
 
       const url = `/inventory?${params.toString()}`
-      console.log('Inventory store: calling API with URL:', url)
       
       const response = await ApiService.get<InventoryItem[]>(url)
-      console.log('Inventory store: API response:', response)
       
       if (response.success && response.data) {
         // Handle nested data structure
@@ -83,12 +80,10 @@ export const useInventoryStore = defineStore('inventory', () => {
         if (response.count !== undefined) {
           pagination.value.total = response.count
         }
-        console.log('Inventory store: items updated:', items.value)
       } else {
         throw new Error(response.error || 'Failed to fetch inventory items')
       }
     } catch (err) {
-      console.error('Inventory store: error fetching items:', err)
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory items'
       setLoading(false, errorMessage)
       throw err
@@ -101,10 +96,8 @@ export const useInventoryStore = defineStore('inventory', () => {
   const fetchItem = async (itemId: string) => {
     try {
       setLoading(true)
-      console.log('Inventory store: fetchItem called for itemId:', itemId)
       
       const response = await ApiService.get<InventoryItem>(`/inventory/item/${itemId}`)
-      console.log('Inventory store: fetchItem response:', response)
       
       if (response.success && response.data) {
         // Handle nested data structure
@@ -115,7 +108,31 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to fetch inventory item')
       }
     } catch (err) {
-      console.error('Inventory store: error fetching item:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
+      setLoading(false, errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch single inventory item by friendly ID
+  const fetchItemByFriendlyId = async (friendlyId: string) => {
+    try {
+      setLoading(true)
+      
+      const response = await ApiService.get<InventoryItem>(`/inventory/friendly/${friendlyId}`)
+      
+      if (response.success && response.data) {
+        // Handle nested data structure
+        const itemData = response.data.data || response.data
+        currentItem.value = itemData
+
+        return itemData
+      } else {
+        throw new Error(response.error || 'Failed to fetch inventory item')
+      }
+    } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
       setLoading(false, errorMessage)
       throw err
@@ -132,7 +149,7 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.post<InventoryItem>('/inventory', itemData)
       
       if (response.success && response.data) {
-        console.log('Create item response data:', response.data)
+
         // Handle nested data structure
         const itemData = response.data.data || response.data
         items.value.unshift(itemData)
@@ -185,7 +202,8 @@ export const useInventoryStore = defineStore('inventory', () => {
   // Delete inventory item
   const deleteItem = async (itemId: string) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
       
       const response = await ApiService.delete(`/inventory/item/${itemId}`)
       
@@ -204,27 +222,29 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to delete inventory item')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete inventory item'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to delete inventory item'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Upload image for inventory item
   const uploadImage = async (file: File, itemId: string, onProgress?: (progress: number) => void) => {
     try {
       setLoading(true)
-      console.log('Uploading image to S3:', file.name, 'for itemId:', itemId)
+
       
       // Create FormData for file upload
       const formData = new FormData()
       formData.append('image', file)
       
       // Upload to backend S3 endpoint using the correct path
-      console.log('Inventory store: About to upload to:', `/images/upload/${itemId}`)
-      console.log('Inventory store: FormData contents:', Array.from(formData.entries()))
+
       
       const response = await ApiService.uploadFile(`/images/upload/${itemId}`, formData, (progress) => {
         if (onProgress) {
@@ -232,7 +252,7 @@ export const useInventoryStore = defineStore('inventory', () => {
         }
       })
       
-      console.log('S3 upload response:', response)
+
       
       if (response.success && response.data) {
         // Handle nested response structure
@@ -257,7 +277,7 @@ export const useInventoryStore = defineStore('inventory', () => {
       setLoading(true)
       
       // TODO: Implement image delete endpoint in backend
-      console.log('Delete image not implemented yet:', { itemId, imageUrl })
+
       
       return true
     } catch (err) {
@@ -275,7 +295,7 @@ export const useInventoryStore = defineStore('inventory', () => {
       setLoading(true)
       
       // TODO: Implement QR code generation endpoint in backend
-      console.log('QR code generation not implemented yet for itemId:', itemId)
+
       
       // Mock QR code URL for now
       const mockQRCodeUrl = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`
@@ -373,6 +393,7 @@ export const useInventoryStore = defineStore('inventory', () => {
     clearError,
     fetchItems,
     fetchItem,
+    fetchItemByFriendlyId,
     createItem,
     updateItem,
     deleteItem,

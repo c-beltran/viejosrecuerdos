@@ -24,6 +24,7 @@ export interface Profile {
 // Inventory types
 export interface InventoryItem extends BaseEntity {
   itemId: string;
+  friendlyId: string; // Human-readable ID (e.g., M0001, P0001)
   itemName: string;
   descripcionArticulo?: string;
   category: InventoryCategory;
@@ -221,6 +222,7 @@ export interface InventoryFilters {
   category?: InventoryCategory;
   status?: InventoryStatus;
   search?: string;
+  friendlyId?: string; // Search by friendly ID (e.g., M0001)
   limit?: number;
   offset?: number;
   includeQR?: boolean;

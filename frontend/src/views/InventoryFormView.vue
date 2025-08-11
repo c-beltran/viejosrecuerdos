@@ -27,6 +27,15 @@
       </div>
     </div>
 
+    <!-- Friendly ID Display (when editing) -->
+    <div v-if="isEditing && item?.friendlyId" class="card-antique p-4 mb-6">
+      <div class="flex items-center space-x-3">
+        <span class="text-sm text-vintage-gray">Friendly ID:</span>
+        <span class="font-mono font-semibold text-lg text-vintage-charcoal bg-vintage-beige px-3 py-1 rounded">{{ item.friendlyId }}</span>
+        <span class="text-xs text-vintage-gray">(Auto-generated, cannot be changed)</span>
+      </div>
+    </div>
+
     <!-- Form -->
     <form v-else @submit.prevent="handleSubmit" class="max-w-4xl">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

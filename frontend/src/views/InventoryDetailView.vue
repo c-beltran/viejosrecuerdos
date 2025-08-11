@@ -146,6 +146,10 @@
               <h3 class="font-semibold text-vintage-charcoal mb-2">Basic Details</h3>
               <dl class="space-y-2">
                 <div>
+                  <dt class="text-sm text-vintage-gray">Friendly ID</dt>
+                  <dd class="text-vintage-charcoal font-mono font-medium bg-vintage-beige px-2 py-1 rounded inline-block">{{ item.friendlyId }}</dd>
+                </div>
+                <div>
                   <dt class="text-sm text-vintage-gray">Name</dt>
                   <dd class="text-vintage-charcoal font-medium">{{ item.itemName }}</dd>
                 </div>

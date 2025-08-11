@@ -75,7 +75,7 @@
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search items by name, description, or category..."
+          placeholder="Search items by name, description, category, or friendly ID (e.g., M0001)..."
           class="w-full pl-10 pr-4 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
           @input="handleSearch"
         />
@@ -243,19 +243,6 @@
             <div v-else class="w-full h-full flex items-center justify-center">
               <Package class="w-12 h-12 text-vintage-gray" />
             </div>
-            <!-- Status Badge -->
-            <div class="absolute top-2 right-2">
-              <span 
-                :class="[
-                  'px-2 py-1 text-xs font-medium rounded-full',
-                  item.status === 'Available' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                ]"
-              >
-                {{ item.status }}
-              </span>
-            </div>
             <!-- Quick Actions -->
             <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
               <button 
@@ -284,6 +271,19 @@
           
           <!-- Item Info -->
           <div class="p-4">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-mono text-vintage-gray bg-vintage-beige px-2 py-1 rounded">{{ item.friendlyId }}</span>
+              <span 
+                :class="[
+                  'px-2 py-1 text-xs font-medium rounded-full',
+                  item.status === 'Available' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                ]"
+              >
+                {{ item.status }}
+              </span>
+            </div>
             <h3 class="font-semibold text-vintage-charcoal mb-1 truncate">{{ item.itemName }}</h3>
             <p class="text-sm text-vintage-gray mb-2">{{ item.category }}</p>
             <div class="flex items-center justify-between mb-2">
@@ -540,12 +540,8 @@ const loadInventory = async () => {
   try {
     isLoading.value = true
     error.value = null
-    console.log('Loading inventory...')
-    console.log('Auth store user:', authStore.user)
-    console.log('Auth store isAuthenticated:', authStore.isAuthenticated)
     
     await inventoryStore.fetchItems()
-    console.log('Inventory loaded:', inventoryStore.items)
   } catch (err) {
     console.error('Error loading inventory:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load inventory'
@@ -594,11 +590,29 @@ const confirmDelete = async () => {
 
   try {
     isDeleting.value = true
-    await inventoryStore.deleteItem(itemToDelete.value.itemId)
+    
+    // Add a timeout to prevent hanging
+    const deletePromise = inventoryStore.deleteItem(itemToDelete.value.itemId)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Delete operation timed out')), 10000)
+    )
+    
+    await Promise.race([deletePromise, timeoutPromise])
+    
     toast.success('Item deleted successfully')
+    
+    // Close modal and reset state
     cancelDelete()
+    
+    // Optionally refresh the inventory list to ensure consistency
+    await loadInventory()
+    
   } catch (err) {
-    toast.error('Failed to delete item')
+    if (err.message === 'Delete operation timed out') {
+      toast.error('Delete operation timed out. Please try again.')
+    } else {
+      toast.error('Failed to delete item')
+    }
   } finally {
     isDeleting.value = false
   }

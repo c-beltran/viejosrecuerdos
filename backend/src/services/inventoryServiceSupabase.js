@@ -18,8 +18,11 @@ const getAllItems = async (filters = {}) => {
     if (filters.status) {
       query = query.eq('status', filters.status);
     }
+    if (filters.friendlyId) {
+      query = query.eq('friendlyId', filters.friendlyId);
+    }
     if (filters.search) {
-      query = query.or(`itemName.ilike.%${filters.search}%,descripcionArticulo.ilike.%${filters.search}%`);
+      query = query.or(`itemName.ilike.%${filters.search}%,descripcionArticulo.ilike.%${filters.search}%,friendlyId.ilike.%${filters.search}%`);
     }
 
     const { data, error } = await query;
@@ -77,6 +80,43 @@ const getItemById = async (itemId) => {
 
     // Generate QR code URL on-demand
     const qrCodeUrl = generateQRCodeUrl(itemId);
+    const itemWithQR = {
+      ...data,
+      qrCodeUrl
+    };
+
+    return {
+      success: true,
+      data: itemWithQR
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Get a single inventory item by friendly ID
+ */
+const getItemByFriendlyId = async (friendlyId) => {
+  try {
+    const { data, error } = await supabase
+      .from('inventory')
+      .select('*')
+      .eq('friendlyId', friendlyId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new Error('Item not found');
+      }
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    // Generate QR code URL on-demand
+    const qrCodeUrl = generateQRCodeUrl(data.itemId);
     const itemWithQR = {
       ...data,
       qrCodeUrl
@@ -275,6 +315,7 @@ const getCategories = async () => {
 module.exports = {
   getAllItems,
   getItemById,
+  getItemByFriendlyId,
   createItem,
   updateItem,
   deleteItem,
