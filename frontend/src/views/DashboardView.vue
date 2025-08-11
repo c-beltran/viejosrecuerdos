@@ -123,7 +123,7 @@
             <div class="flex items-center space-x-3">
               <div v-if="item.imageUrls && item.imageUrls.length > 0" class="w-10 h-10 rounded-lg overflow-hidden">
                 <img 
-                  :src="item.imageUrls[0].thumbnail" 
+                  :src="item.imageUrls[0].url" 
                   :alt="item.itemName"
                   class="w-full h-full object-cover"
                 />

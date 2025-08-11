@@ -94,7 +94,7 @@
             <!-- Main Image -->
             <div class="relative">
               <img 
-                :src="selectedImage.original" 
+                :src="selectedImage.url" 
                 :alt="item.itemName"
                 class="w-full h-96 object-cover rounded-lg"
               />
@@ -125,7 +125,7 @@
                 :class="selectedImageIndex === index ? 'border-antique-gold' : 'border-vintage-beige'"
               >
                 <img 
-                  :src="image.thumbnail" 
+                  :src="image.url" 
                   :alt="`${item.itemName} - Image ${index + 1}`"
                   class="w-full h-full object-cover"
                 />
@@ -454,9 +454,9 @@ const formatDate = (dateString: string) => {
 const getValidImages = (imageUrls: any[] | undefined) => {
   if (!imageUrls || !Array.isArray(imageUrls)) return []
   
-  // Filter out strings and return only valid image objects
+  // Filter out strings and return only valid image objects with simplified structure
   return imageUrls.filter(img => 
-    img && typeof img === 'object' && img.thumbnail && img.original
+    img && typeof img === 'object' && img.url && img.fileName
   )
 }
 

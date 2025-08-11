@@ -79,22 +79,9 @@ export interface UpdateInventoryItemRequest {
 
 // Image types
 export interface ImageData {
-  original: string;
-  medium: string;
-  thumbnail: string;
   fileName: string;
-  metadata?: ImageMetadata;
-}
-
-export interface ImageMetadata {
-  width: number;
-  height: number;
-  format: string;
-  size: number;
-  hasAlpha?: boolean;
-  hasProfile?: boolean;
-  isOpaque?: boolean;
-  orientation?: number;
+  originalName: string;
+  url: string; // Medium size URL only
 }
 
 // Client types

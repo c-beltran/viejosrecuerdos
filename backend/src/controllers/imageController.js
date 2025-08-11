@@ -105,10 +105,7 @@ const uploadSingleImage = async (req, res) => {
 
     // Update inventory item with new image URLs
     const currentImages = itemResult.data.imageUrls || [];
-    const newImageData = {
-      ...result.data,
-      metadata: imageService.generateImageMetadata(req.file)
-    };
+    const newImageData = result.data; // Already in simplified format
     
     const updatedImages = [...currentImages, newImageData];
     
@@ -243,10 +240,7 @@ const uploadMultipleImages = async (req, res) => {
 
     // Update inventory item with new image URLs
     const currentImages = itemResult.data.imageUrls || [];
-    const newImagesData = result.data.map((imageData, index) => ({
-      ...imageData,
-      metadata: imageService.generateImageMetadata(req.files[index])
-    }));
+    const newImagesData = result.data; // Already in simplified format
     
     const updatedImages = [...currentImages, ...newImagesData];
     

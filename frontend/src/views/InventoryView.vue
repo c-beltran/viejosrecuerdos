@@ -236,7 +236,7 @@
           <div class="relative h-48 bg-vintage-beige overflow-hidden">
             <img 
               v-if="getFirstValidImage(item.imageUrls)"
-              :src="getFirstValidImage(item.imageUrls)?.thumbnail" 
+                              :src="getFirstValidImage(item.imageUrls)?.url" 
               :alt="item.itemName"
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -334,7 +334,7 @@
                     <div class="w-10 h-10 bg-vintage-beige rounded-lg overflow-hidden mr-3">
                       <img 
                         v-if="getFirstValidImage(item.imageUrls)"
-                        :src="getFirstValidImage(item.imageUrls)?.thumbnail" 
+                        :src="getFirstValidImage(item.imageUrls)?.url" 
                         :alt="item.itemName"
                         class="w-full h-full object-cover"
                       />
@@ -457,6 +457,7 @@ const authStore = useAuthStore()
 // Reactive state
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+const hasLoadedInventory = ref(false)
 const searchQuery = ref('')
 const showFilters = ref(false)
 const viewMode = ref<'grid' | 'list'>('grid')
@@ -542,6 +543,7 @@ const loadInventory = async () => {
     error.value = null
     
     await inventoryStore.fetchItems()
+    hasLoadedInventory.value = true
   } catch (err) {
     console.error('Error loading inventory:', err)
     error.value = err instanceof Error ? err.message : 'Failed to load inventory'
@@ -568,6 +570,9 @@ const clearFilters = () => {
   }
   searchQuery.value = ''
   currentPage.value = 1
+  // Reset inventory state when filters are cleared
+  hasLoadedInventory.value = false
+  loadInventory()
 }
 
 const toggleViewMode = () => {
@@ -626,9 +631,9 @@ const formatPrice = (price: number | undefined) => {
 const getFirstValidImage = (imageUrls: any[] | undefined) => {
   if (!imageUrls || !Array.isArray(imageUrls)) return null
   
-  // Find the first valid image object (not a string)
+  // Find the first valid image object with simplified structure
   const validImage = imageUrls.find(img => 
-    img && typeof img === 'object' && img.thumbnail && img.original
+    img && typeof img === 'object' && img.url && img.fileName
   )
   
   return validImage || null
@@ -637,11 +642,25 @@ const getFirstValidImage = (imageUrls: any[] | undefined) => {
 // Watchers
 watch([searchQuery, filters], () => {
   currentPage.value = 1
+  // Reload inventory when filters change significantly
+  if (hasLoadedInventory.value) {
+    loadInventory()
+  }
 }, { deep: true })
 
 // Lifecycle
 onMounted(() => {
-  loadInventory()
+  // Only load inventory if it's not already loaded
+  if (!hasLoadedInventory.value) {
+    loadInventory()
+  }
+})
+
+// Watch for route changes to reload inventory when navigating back
+watch(() => router.currentRoute.value.path, (newPath) => {
+  if (newPath === '/inventory' && !hasLoadedInventory.value) {
+    loadInventory()
+  }
 })
 </script>
 

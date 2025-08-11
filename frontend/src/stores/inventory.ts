@@ -54,7 +54,8 @@ export const useInventoryStore = defineStore('inventory', () => {
   // Fetch all inventory items
   const fetchItems = async (newFilters?: Partial<InventoryFilters>) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
       
       // Update filters if provided
       if (newFilters) {
@@ -84,18 +85,22 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to fetch inventory items')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory items'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory items'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Fetch single inventory item
   const fetchItem = async (itemId: string) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
       
       const response = await ApiService.get<InventoryItem>(`/inventory/item/${itemId}`)
       
@@ -108,18 +113,22 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to fetch inventory item')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Fetch single inventory item by friendly ID
   const fetchItemByFriendlyId = async (friendlyId: string) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
       
       const response = await ApiService.get<InventoryItem>(`/inventory/friendly/${friendlyId}`)
       
@@ -133,18 +142,22 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to fetch inventory item')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to fetch inventory item'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Create new inventory item
   const createItem = async (itemData: CreateInventoryItemRequest) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
       
       const response = await ApiService.post<InventoryItem>('/inventory', itemData)
       
@@ -159,18 +172,22 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to create inventory item')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create inventory item'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to create inventory item'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Update inventory item
   const updateItem = async (itemId: string, updateData: UpdateInventoryItemRequest) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
       
       const response = await ApiService.put<InventoryItem>(`/inventory/item/${itemId}`, updateData)
       
@@ -191,12 +208,15 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to update inventory item')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update inventory item'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to update inventory item'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Delete inventory item
@@ -236,7 +256,8 @@ export const useInventoryStore = defineStore('inventory', () => {
   // Upload image for inventory item
   const uploadImage = async (file: File, itemId: string, onProgress?: (progress: number) => void) => {
     try {
-      setLoading(true)
+      // Don't set store loading state - let component handle it locally
+      // setLoading(true)
 
       
       // Create FormData for file upload
@@ -255,20 +276,23 @@ export const useInventoryStore = defineStore('inventory', () => {
 
       
       if (response.success && response.data) {
-        // Handle nested response structure
-        const uploadData = response.data.data || response.data
-        return uploadData
+        // Extract image data from the new simplified response structure
+        const imageData = response.data.image || response.data
+        return imageData
       } else {
         throw new Error(response.error || 'Failed to upload image to S3')
       }
     } catch (err) {
       console.error('S3 upload error:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload image'
-      setLoading(false, errorMessage)
+      // Don't set store loading state - let component handle it locally
+      // const errorMessage = err instanceof Error ? err.message : 'Failed to upload image'
+      // setLoading(false, errorMessage)
       throw err
-    } finally {
-      setLoading(false)
     }
+    // Don't set store loading state - let component handle it locally
+    // finally {
+    //   setLoading(false)
+    // }
   }
 
   // Delete image from inventory item
