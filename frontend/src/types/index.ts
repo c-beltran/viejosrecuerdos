@@ -62,6 +62,7 @@ export interface CreateInventoryItemRequest {
   initialQuantity: number;
   currentQuantity: number;
   unitPrice: number;
+  status?: InventoryStatus;
   internalNotes?: string;
   imageUrls?: ImageData[];
 }
@@ -73,6 +74,7 @@ export interface UpdateInventoryItemRequest {
   initialQuantity?: number;
   currentQuantity?: number;
   unitPrice?: number;
+  status?: InventoryStatus;
   internalNotes?: string;
   imageUrls?: ImageData[];
 }

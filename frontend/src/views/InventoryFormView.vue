@@ -333,7 +333,7 @@ import {
   X,
   Package
 } from 'lucide-vue-next'
-import type { CreateInventoryItemRequest, UpdateInventoryItemRequest, ImageData } from '@/types'
+import type { CreateInventoryItemRequest, UpdateInventoryItemRequest, ImageData, InventoryStatus } from '@/types'
 import type { InventoryItem } from '@/types'
 
 // Composables
@@ -351,13 +351,14 @@ const item = ref<InventoryItem | null>(null) // Add reactive item variable
 const uploadProgress = ref<Array<{ fileName: string; progress: number; status: 'uploading' | 'completed' | 'error'; error?: string }>>([])
 
 // Form data
-const form = ref<CreateInventoryItemRequest & { currentQuantity: number; pendingImages?: File[] }>({
+const form = ref<CreateInventoryItemRequest & { currentQuantity: number; status: InventoryStatus; pendingImages?: File[] }>({
   itemName: '',
   descripcionArticulo: '',
   category: 'Mobiliario',
   initialQuantity: 1,
   currentQuantity: 1,
   unitPrice: 0,
+  status: 'Available', // Default to Available
   internalNotes: '',
   imageUrls: [],
   pendingImages: []
@@ -406,6 +407,7 @@ const loadItem = async () => {
         initialQuantity: fetchedItem.initialQuantity,
         currentQuantity: fetchedItem.currentQuantity,
         unitPrice: fetchedItem.unitPrice,
+        status: fetchedItem.status || 'Available', // Load existing status or default to Available
         internalNotes: fetchedItem.internalNotes || '',
         imageUrls: getValidImages(fetchedItem.imageUrls) || []
       }
@@ -655,6 +657,7 @@ const handleSubmit = async () => {
         initialQuantity: form.value.initialQuantity,
         currentQuantity: form.value.currentQuantity,
         unitPrice: form.value.unitPrice,
+        status: form.value.status, // Include status in update
         internalNotes: form.value.internalNotes,
         imageUrls: form.value.imageUrls
       }
@@ -669,6 +672,7 @@ const handleSubmit = async () => {
         initialQuantity: form.value.initialQuantity,
         currentQuantity: form.value.currentQuantity,
         unitPrice: form.value.unitPrice,
+        status: form.value.status, // Include status in create
         internalNotes: form.value.internalNotes,
         imageUrls: form.value.imageUrls
       }

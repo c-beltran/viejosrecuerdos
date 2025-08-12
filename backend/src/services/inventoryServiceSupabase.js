@@ -22,6 +22,7 @@ const getAllItems = async (filters = {}) => {
       query = query.eq('friendlyId', filters.friendlyId);
     }
     if (filters.search) {
+      console.log('Backend search filter:', filters.search)
       query = query.or(`itemName.ilike.%${filters.search}%,descripcionArticulo.ilike.%${filters.search}%,friendlyId.ilike.%${filters.search}%`);
     }
 

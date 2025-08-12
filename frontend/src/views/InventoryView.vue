@@ -76,9 +76,18 @@
           v-model="searchQuery"
           type="text"
           placeholder="Search items by name, description, category, or friendly ID (e.g., M0001)..."
-          class="w-full pl-10 pr-4 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
-          @input="handleSearch"
+          class="w-full pl-10 pr-4 py-3 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray"
+          @input="debouncedSearch"
         />
+        <!-- Clear search button -->
+        <button
+          v-if="searchQuery"
+          @click="clearSearch"
+          class="absolute right-3 top-1/2 transform -translate-y-1/2 text-vintage-gray hover:text-vintage-charcoal transition-colors"
+          title="Clear search"
+        >
+          <X class="w-4 h-4" />
+        </button>
       </div>
 
       <!-- Filters -->
@@ -444,7 +453,8 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-vue-next'
 import type { InventoryItem, InventoryFilters } from '@/types'
 
@@ -457,25 +467,36 @@ const authStore = useAuthStore()
 // Reactive state
 const isLoading = ref(false)
 const error = ref<string | null>(null)
-const hasLoadedInventory = ref(false)
-const searchQuery = ref('')
-const showFilters = ref(false)
-const viewMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
 const itemsPerPage = ref(12)
-
-// Delete modal state
+const viewMode = ref<'grid' | 'list'>('grid')
 const showDeleteModal = ref(false)
 const itemToDelete = ref<InventoryItem | null>(null)
 const isDeleting = ref(false)
+const hasLoadedInventory = ref(false)
 
-// Filters
-const filters = ref<InventoryFilters>({
+// Search and filters
+const searchQuery = ref('')
+const filters = ref({
   category: '',
   status: '',
-  minPrice: undefined,
-  maxPrice: undefined
+  minPrice: undefined as number | undefined,
+  maxPrice: undefined as number | undefined
 })
+
+// Debounced search
+let searchTimeout: NodeJS.Timeout | null = null
+const debouncedSearch = () => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    if (searchQuery.value.trim()) {
+      hasLoadedInventory.value = false
+      loadInventory()
+    }
+  }, 300) // 300ms delay
+}
 
 // Computed properties
 const items = computed(() => inventoryStore.items)
@@ -487,13 +508,14 @@ const categories = computed(() => [
 const filteredItems = computed(() => {
   let filtered = [...items.value]
 
-  // Search filter
+  // Search filter (local fallback when backend search is not used)
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(item => 
       item.itemName.toLowerCase().includes(query) ||
       item.descripcionArticulo?.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query)
+      item.category.toLowerCase().includes(query) ||
+      item.friendlyId.toLowerCase().includes(query) // Include friendlyId in local search
     )
   }
 
@@ -542,7 +564,14 @@ const loadInventory = async () => {
     isLoading.value = true
     error.value = null
     
-    await inventoryStore.fetchItems()
+    // If there's a search query, use backend search
+    if (searchQuery.value.trim()) {
+      console.log('Searching with query:', searchQuery.value.trim())
+      await inventoryStore.fetchItems({ search: searchQuery.value.trim() })
+    } else {
+      console.log('Loading all items (no search)')
+      await inventoryStore.fetchItems()
+    }
     hasLoadedInventory.value = true
   } catch (err) {
     console.error('Error loading inventory:', err)
@@ -555,6 +584,11 @@ const loadInventory = async () => {
 
 const handleSearch = () => {
   currentPage.value = 1
+  // Trigger backend search when user types in search box
+  if (searchQuery.value.trim()) {
+    hasLoadedInventory.value = false
+    loadInventory()
+  }
 }
 
 const applyFilters = () => {
@@ -571,6 +605,14 @@ const clearFilters = () => {
   searchQuery.value = ''
   currentPage.value = 1
   // Reset inventory state when filters are cleared
+  hasLoadedInventory.value = false
+  loadInventory()
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  currentPage.value = 1
+  // Reload all items when search is cleared
   hasLoadedInventory.value = false
   loadInventory()
 }

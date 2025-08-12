@@ -97,6 +97,7 @@
                 :src="selectedImage.url" 
                 :alt="item.itemName"
                 class="w-full h-96 object-cover rounded-lg"
+                style="object-fit: contain !important;"
               />
               <!-- Image Navigation -->
               <div v-if="getValidImages(item.imageUrls).length > 1" class="absolute inset-0 flex items-center justify-between p-4">
