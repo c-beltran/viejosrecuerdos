@@ -69,11 +69,15 @@
   }
   
   .sidebar {
-    @apply bg-white border-r border-vintage-beige shadow-lg;
+    @apply bg-white border-r border-vintage-beige shadow-lg relative z-10;
   }
   
   .mobile-nav {
     @apply fixed bottom-0 left-0 right-0 bg-white border-t border-vintage-beige shadow-lg z-50;
+  }
+  
+  .main-content {
+    @apply relative z-0;
   }
   
   .glass-effect {

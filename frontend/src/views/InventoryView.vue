@@ -408,12 +408,13 @@
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="flex items-center justify-between mt-6">
         <div class="text-sm text-vintage-gray">
-          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredItems.length) }} of {{ filteredItems.length }} items
+          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, inventoryStore.totalItems) }} of {{ inventoryStore.totalItems }} items
         </div>
         <div class="flex items-center space-x-2">
           <button 
-            @click="currentPage--"
-            :disabled="currentPage === 1"
+            @click="handlePageChange(currentPage - 1)"
+            :disabled="isFirstPage"
+            :title="`Go to previous page (${currentPage - 1} of ${totalPages})`"
             class="px-3 py-2 text-sm border border-vintage-beige rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-vintage-beige transition-colors"
           >
             Previous
@@ -422,8 +423,9 @@
             Page {{ currentPage }} of {{ totalPages }}
           </span>
           <button 
-            @click="currentPage++"
-            :disabled="currentPage === totalPages"
+            @click="() => handlePageChange(currentPage + 1)"
+            :disabled="isLastPage"
+            :title="`Go to next page (${currentPage + 1} of ${totalPages})`"
             class="px-3 py-2 text-sm border border-vintage-beige rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-vintage-beige transition-colors"
           >
             Next
@@ -468,7 +470,7 @@ const authStore = useAuthStore()
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const currentPage = ref(1)
-const itemsPerPage = ref(12)
+const itemsPerPage = ref(25)
 const viewMode = ref<'grid' | 'list'>('grid')
 const showDeleteModal = ref(false)
 const itemToDelete = ref<InventoryItem | null>(null)
@@ -477,6 +479,7 @@ const hasLoadedInventory = ref(false)
 
 // Search and filters
 const searchQuery = ref('')
+const showFilters = ref(false)
 const filters = ref({
   category: '',
   status: '',
@@ -491,8 +494,15 @@ const debouncedSearch = () => {
     clearTimeout(searchTimeout)
   }
   searchTimeout = setTimeout(() => {
+    hasLoadedInventory.value = false
+    resetPagination()
     if (searchQuery.value.trim()) {
-      hasLoadedInventory.value = false
+      // Update store filters with search query
+      inventoryStore.updateSearchFilter(searchQuery.value.trim())
+      loadInventory()
+    } else {
+      // Clear store search filter when search is empty
+      inventoryStore.clearSearchFilter()
       loadInventory()
     }
   }, 300) // 300ms delay
@@ -541,17 +551,25 @@ const filteredItems = computed(() => {
 })
 
 const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredItems.value.slice(start, end)
+  // Use items directly from store instead of client-side filtering
+  return inventoryStore.items
 })
 
-const totalPages = computed(() => Math.ceil(filteredItems.value.length / itemsPerPage.value))
+const totalPages = computed(() => {
+  // Use total from backend pagination instead of client-side calculation
+  const pages = Math.ceil(inventoryStore.totalItems / itemsPerPage.value)
+  return pages
+})
+
+const isFirstPage = computed(() => currentPage.value <= 1)
+const isLastPage = computed(() => currentPage.value >= totalPages.value)
+const canGoNext = computed(() => currentPage.value < totalPages.value)
+const canGoPrevious = computed(() => currentPage.value > 1)
 
 const stats = computed(() => {
   const items = inventoryStore.items
   return {
-    totalItems: items.length,
+    totalItems: inventoryStore.totalItems,
     availableItems: items.filter(item => item.status === 'Available').length,
     soldOutItems: items.filter(item => item.status === 'Sold-Out').length,
     lowStockItems: items.filter(item => item.currentQuantity <= 3).length
@@ -564,14 +582,32 @@ const loadInventory = async () => {
     isLoading.value = true
     error.value = null
     
-    // If there's a search query, use backend search
-    if (searchQuery.value.trim()) {
-      console.log('Searching with query:', searchQuery.value.trim())
-      await inventoryStore.fetchItems({ search: searchQuery.value.trim() })
-    } else {
-      console.log('Loading all items (no search)')
-      await inventoryStore.fetchItems()
+    // Ensure current page is within valid bounds
+    if (totalPages.value > 0 && currentPage.value > totalPages.value) {
+      currentPage.value = totalPages.value
     }
+    
+    // Calculate offset for pagination
+    const offset = (currentPage.value - 1) * itemsPerPage.value
+    
+    // Prepare filters with pagination
+    const loadFilters: any = {
+      limit: itemsPerPage.value,
+      offset: offset
+    }
+    
+    // If there's a search query, add it to filters
+    if (searchQuery.value.trim()) {
+      loadFilters.search = searchQuery.value.trim()
+    }
+    
+    // Add other filters if they exist
+    if (filters.value.category) loadFilters.category = filters.value.category
+    if (filters.value.status) loadFilters.status = filters.value.status
+    if (filters.value.minPrice !== undefined) loadFilters.minPrice = filters.value.minPrice
+    if (filters.value.maxPrice !== undefined) loadFilters.maxPrice = filters.value.maxPrice
+    
+    await inventoryStore.fetchItems(loadFilters)
     hasLoadedInventory.value = true
   } catch (err) {
     console.error('Error loading inventory:', err)
@@ -591,8 +627,12 @@ const handleSearch = () => {
   }
 }
 
-const applyFilters = () => {
+const resetPagination = () => {
   currentPage.value = 1
+}
+
+const applyFilters = () => {
+  resetPagination()
 }
 
 const clearFilters = () => {
@@ -603,22 +643,42 @@ const clearFilters = () => {
     maxPrice: undefined
   }
   searchQuery.value = ''
-  currentPage.value = 1
-  // Reset inventory state when filters are cleared
+  resetPagination()
+  // Clear store filters and reset inventory state when filters are cleared
   hasLoadedInventory.value = false
+  inventoryStore.clearFilters()
   loadInventory()
 }
 
 const clearSearch = () => {
   searchQuery.value = ''
-  currentPage.value = 1
-  // Reload all items when search is cleared
+  resetPagination()
+  // Clear store search filter and reload all items when search is cleared
   hasLoadedInventory.value = false
+  // Clear only the store's search filter
+  inventoryStore.clearSearchFilter()
   loadInventory()
 }
 
 const toggleViewMode = () => {
   viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid'
+}
+
+const handlePageChange = (newPage: number) => {
+  // Validate page bounds
+  if (newPage < 1 || newPage > totalPages.value) {
+    console.warn(`Invalid page number: ${newPage}. Must be between 1 and ${totalPages.value}`)
+    return
+  }
+  
+  // Prevent unnecessary page changes
+  if (newPage === currentPage.value) {
+    return
+  }
+  
+  currentPage.value = newPage
+  hasLoadedInventory.value = false
+  loadInventory()
 }
 
 const deleteItem = (item: InventoryItem) => {
@@ -683,12 +743,29 @@ const getFirstValidImage = (imageUrls: any[] | undefined) => {
 
 // Watchers
 watch([searchQuery, filters], () => {
-  currentPage.value = 1
+  resetPagination()
   // Reload inventory when filters change significantly
   if (hasLoadedInventory.value) {
     loadInventory()
   }
 }, { deep: true })
+
+// Watch total pages to ensure current page is valid
+watch(totalPages, (newTotalPages) => {
+  if (newTotalPages > 0 && currentPage.value > newTotalPages) {
+    currentPage.value = newTotalPages
+  }
+})
+
+// Watch search query specifically for immediate changes (like highlighting and deleting)
+watch(searchQuery, (newValue, oldValue) => {
+  // If search was cleared (highlighted and deleted), immediately clear store filter
+  if (oldValue && !newValue) {
+    inventoryStore.clearSearchFilter()
+    hasLoadedInventory.value = false
+    loadInventory()
+  }
+})
 
 // Lifecycle
 onMounted(() => {

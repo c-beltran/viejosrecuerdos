@@ -56,7 +56,6 @@ export const useInventoryStore = defineStore('inventory', () => {
     try {
       // Don't set store loading state - let component handle it locally
       // setLoading(true)
-      
       // Update filters if provided
       if (newFilters) {
         filters.value = { ...filters.value, ...newFilters }
@@ -74,13 +73,20 @@ export const useInventoryStore = defineStore('inventory', () => {
       
       const response = await ApiService.get<InventoryItem[]>(url)
       
+      
       if (response.success && response.data) {
         // Handle nested data structure
         const itemsData = response.data.data || response.data
         items.value = itemsData
+        
+        // Update pagination info from response
         if (response.count !== undefined) {
           pagination.value.total = response.count
         }
+        if (response.total !== undefined) {
+          pagination.value.total = response.total
+        }
+        
       } else {
         throw new Error(response.error || 'Failed to fetch inventory items')
       }
@@ -376,6 +382,28 @@ export const useInventoryStore = defineStore('inventory', () => {
     currentItem.value = null
   }
 
+  // Clear filters (but keep other store state)
+  const clearFilters = () => {
+    filters.value = {
+      category: undefined,
+      status: undefined,
+      search: '',
+      limit: 20,
+      offset: 0,
+      includeQR: false
+    }
+  }
+
+  // Update only the search filter
+  const updateSearchFilter = (searchTerm: string) => {
+    filters.value.search = searchTerm
+  }
+
+  // Clear only the search filter
+  const clearSearchFilter = () => {
+    filters.value.search = ''
+  }
+
   // Reset store
   const reset = () => {
     items.value = []
@@ -427,6 +455,9 @@ export const useInventoryStore = defineStore('inventory', () => {
     getStats,
     getCategories,
     clearCurrentItem,
+    clearFilters,
+    updateSearchFilter,
+    clearSearchFilter,
     reset
   }
 }) 

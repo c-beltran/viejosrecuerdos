@@ -132,17 +132,29 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   
-  // If auth is still loading, wait for it to complete
+  // If auth is still loading, wait for it to complete with timeout
   if (authStore.isLoading) {
-    // Wait for auth to initialize
-    await new Promise(resolve => {
-      const unwatch = authStore.$subscribe((mutation, state) => {
-        if (!state.isLoading) {
-          unwatch()
-          resolve(true)
-        }
-      })
-    })
+    console.log('Auth is loading, waiting for initialization...')
+    try {
+      // Wait for auth to initialize with timeout
+      await Promise.race([
+        new Promise(resolve => {
+          const unwatch = authStore.$subscribe((mutation, state) => {
+            if (!state.isLoading) {
+              unwatch()
+              resolve(true)
+            }
+          })
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 15000)
+        )
+      ])
+    } catch (err) {
+      console.error('Auth initialization timeout or error:', err)
+      // Force reset loading state and continue
+      authStore.$patch({ isLoading: false })
+    }
   }
   
   console.log('Navigation guard - isAuthenticated:', authStore.isAuthenticated, 'Route:', to.path)

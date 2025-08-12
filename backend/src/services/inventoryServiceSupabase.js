@@ -8,7 +8,7 @@ const getAllItems = async (filters = {}) => {
   try {
     let query = supabase
       .from('inventory')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('createDate', { ascending: false });
 
     // Apply filters
@@ -22,11 +22,18 @@ const getAllItems = async (filters = {}) => {
       query = query.eq('friendlyId', filters.friendlyId);
     }
     if (filters.search) {
-      console.log('Backend search filter:', filters.search)
       query = query.or(`itemName.ilike.%${filters.search}%,descripcionArticulo.ilike.%${filters.search}%,friendlyId.ilike.%${filters.search}%`);
     }
 
-    const { data, error } = await query;
+    // Apply pagination
+    if (filters.limit && filters.limit > 0) {
+      const start = filters.offset || 0;
+      const end = start + filters.limit - 1;
+      query = query.range(start, end);
+    }
+
+    const { data, error, count } = await query;
+
 
     if (error) {
       throw new Error(`Database error: ${error.message}`);
@@ -44,7 +51,7 @@ const getAllItems = async (filters = {}) => {
     return {
       success: true,
       data: items,
-      count: items.length
+      count: count || items.length
     };
   } catch (error) {
     return {

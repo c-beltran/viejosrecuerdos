@@ -12,8 +12,8 @@
     <!-- Main App -->
     <div v-else class="flex h-screen">
       <!-- Desktop Sidebar -->
-      <aside v-if="isAuthenticated && !isMobile" class="sidebar w-64 hidden lg:block">
-        <div class="p-6">
+      <aside v-if="isAuthenticated && !isMobile" class="sidebar w-64 hidden lg:block flex flex-col">
+        <div class="flex-1 p-6">
           <!-- Logo -->
           <div class="flex items-center space-x-3 mb-8">
             <div class="w-10 h-10 bg-antique-gradient rounded-lg flex items-center justify-center">
@@ -59,7 +59,7 @@
         </div>
 
         <!-- User Info -->
-        <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-vintage-beige">
+        <div class="p-6 border-t border-vintage-beige bg-white">
           <div class="flex items-center space-x-3">
             <div class="w-8 h-8 bg-antique-gold rounded-full flex items-center justify-center">
               <span class="text-white text-sm font-medium">{{ userInitials }}</span>
@@ -163,9 +163,9 @@
       </div>
 
       <!-- Main Content -->
-      <main class="flex-1 flex flex-col overflow-hidden">
+      <main class="flex-1 flex flex-col overflow-hidden main-content">
         <!-- Desktop Content -->
-        <div v-if="!isMobile" class="flex-1 overflow-auto">
+        <div v-if="!isMobile" class="flex-1 overflow-auto relative">
           <router-view />
         </div>
 
