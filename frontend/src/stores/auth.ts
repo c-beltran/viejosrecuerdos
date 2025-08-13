@@ -8,10 +8,17 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const profileCreationAttempts = ref<Set<string>>(new Set())
 
   // Getters
   const isAuthenticated = computed(() => !!user.value)
   const userRole = computed(() => user.value?.role || 'viewer')
+  const hasValidProfile = computed(() => {
+    return user.value && 
+           user.value.id && 
+           user.value.role && 
+           user.value.name
+  })
 
   // Actions
   const initialize = async () => {
@@ -41,18 +48,34 @@ export const useAuthStore = defineStore('auth', () => {
         console.log('Auth state change:', event, 'User:', session?.user?.id)
         
         if (event === 'SIGNED_IN' && session?.user) {
-          await fetchUserProfile(session.user.id)
+          // Only fetch profile if we don't already have it
+          if (!user.value || user.value.id !== session.user.id) {
+            try {
+              await fetchUserProfile(session.user.id)
+            } catch (err) {
+              console.error('Failed to fetch profile on sign in:', err)
+              // Ensure loading state is reset even on error
+              isLoading.value = false
+            }
+          } else {
+            console.log('User already authenticated, skipping profile fetch')
+          }
         } else if (event === 'SIGNED_OUT') {
           user.value = null
+          profileCreationAttempts.value.clear()
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // Re-fetch profile when token is refreshed
-          console.log('Token refreshed, re-fetching profile...')
-          try {
-            await fetchUserProfile(session.user.id)
-          } catch (err) {
-            console.error('Failed to re-fetch profile after token refresh:', err)
-            // Ensure loading state is reset even on error
-            isLoading.value = false
+          // Only re-fetch profile if we don't already have user data
+          if (!user.value || user.value.id !== session.user.id) {
+            console.log('Token refreshed, re-fetching profile...')
+            try {
+              await fetchUserProfile(session.user.id)
+            } catch (err) {
+              console.error('Failed to re-fetch profile after token refresh:', err)
+              // Ensure loading state is reset even on error
+              isLoading.value = false
+            }
+          } else {
+            console.log('Token refreshed, but user profile already loaded, skipping re-fetch')
           }
         }
       })
@@ -66,27 +89,57 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const fetchUserProfile = async (userId: string) => {
+    const fetchUserProfile = async (userId: string) => {
+    // Wrap the entire function in a timeout to prevent hanging
+    const functionTimeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Function timeout')), 15000)
+    )
+    
+    try {
+      const result = await Promise.race([
+        fetchUserProfileInternal(userId),
+        functionTimeout
+      ])
+      return result
+    } catch (err) {
+      console.error('fetchUserProfile timed out or failed:', err)
+      
+      // Only create fallback user if we don't already have one
+      if (!user.value || user.value.id !== userId) {
+        console.log('Creating fallback user due to timeout')
+        user.value = {
+          id: userId,
+          email: '',
+          role: 'clerk',
+          name: 'User'
+        }
+        
+        // Try to create profile in background only if we haven't tried before
+        if (!profileCreationAttempts.value.has(userId)) {
+          profileCreationAttempts.value.add(userId)
+          createProfileInBackground(userId).catch(err => {
+            console.warn('Background profile creation failed:', err)
+          })
+        } else {
+          console.log('Profile creation already attempted for user:', userId)
+        }
+      } else {
+        console.log('User profile already exists, skipping fallback creation')
+      }
+    } finally {
+      if (isLoading.value) {
+        isLoading.value = false
+      }
+    }
+  }
+
+  const fetchUserProfileInternal = async (userId: string) => {
     try {
       console.log('Fetching profile for user:', userId)
       
-      // First, let's check if we can connect to the database
-      console.log('Testing database connection...')
-      const { data: testData, error: testError } = await supabase
-        .from('profiles')
-        .select('count')
-        .limit(1)
-      
-      if (testError) {
-        console.error('Database connection test failed:', testError)
-        throw new Error(`Database connection failed: ${testError.message}`)
-      }
-      
-      console.log('Database connection successful, proceeding with profile fetch...')
-      
-      // Add timeout to prevent hanging (reduced from 10s to 5s)
+      // Add timeout to prevent hanging (increased to 10 seconds for slow connections)
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
       )
       
       const profilePromise = supabase
@@ -96,7 +149,7 @@ export const useAuthStore = defineStore('auth', () => {
         .single()
       
       const { data, error: profileError } = await Promise.race([profilePromise, timeoutPromise])
-
+      
       if (profileError) {
         console.error('Profile error:', profileError)
         
@@ -110,10 +163,15 @@ export const useAuthStore = defineStore('auth', () => {
             name: 'User'
           }
           
-          // Try to create profile in background
-          createProfileInBackground(userId).catch(err => {
-            console.warn('Background profile creation failed:', err)
-          })
+          // Try to create profile in background only if we haven't tried before
+          if (!profileCreationAttempts.value.has(userId)) {
+            profileCreationAttempts.value.add(userId)
+            createProfileInBackground(userId).catch(err => {
+              console.warn('Background profile creation failed:', err)
+            })
+          } else {
+            console.log('Profile creation already attempted for user:', userId)
+          }
           return
         }
         
@@ -150,6 +208,8 @@ export const useAuthStore = defineStore('auth', () => {
           console.warn('Profile fetch timed out, using fallback user data')
         } else if (err.message.includes('fetch')) {
           console.warn('Network error during profile fetch, using fallback user data')
+        } else if (err.message.includes('Database connection failed')) {
+          console.warn('Database connection issue, using fallback user data')
         }
       }
       
@@ -164,14 +224,14 @@ export const useAuthStore = defineStore('auth', () => {
       // Log the fallback user creation
       console.log('Created fallback user profile for:', userId)
       
-      // Try to create the profile in the background (non-blocking)
-      createProfileInBackground(userId).catch(err => {
-        console.warn('Background profile creation failed:', err)
-      })
-    } finally {
-      // Always ensure loading state is reset
-      if (isLoading.value) {
-        isLoading.value = false
+      // Try to create the profile in the background (non-blocking) only if we haven't tried before
+      if (!profileCreationAttempts.value.has(userId)) {
+        profileCreationAttempts.value.add(userId)
+        createProfileInBackground(userId).catch(err => {
+          console.warn('Background profile creation failed:', err)
+        })
+      } else {
+        console.log('Profile creation already attempted for user:', userId)
       }
     }
   }
@@ -180,6 +240,23 @@ export const useAuthStore = defineStore('auth', () => {
   const createProfileInBackground = async (userId: string) => {
     try {
       console.log('Attempting to create profile in background for:', userId)
+      
+      // First check if profile already exists to avoid duplicate creation
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', userId)
+        .single()
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.warn('Error checking existing profile:', checkError)
+        return // Don't proceed if there's an error checking
+      }
+      
+      if (existingProfile) {
+        console.log('Profile already exists for user:', userId)
+        return // Profile already exists, no need to create
+      }
       
       const { error } = await supabase
         .from('profiles')
@@ -192,14 +269,19 @@ export const useAuthStore = defineStore('auth', () => {
         ])
       
       if (error) {
-        console.error('Background profile creation failed:', error)
-        throw error
+        // Handle specific error codes
+        if (error.code === '23505') {
+          console.log('Profile already exists (duplicate key constraint)')
+        } else {
+          console.error('Background profile creation failed:', error)
+          throw error
+        }
+      } else {
+        console.log('Background profile creation successful for:', userId)
       }
-      
-      console.log('Background profile creation successful for:', userId)
     } catch (err) {
       console.error('Background profile creation error:', err)
-      throw err
+      // Don't throw here - this is background operation
     }
   }
 
@@ -423,6 +505,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     isAuthenticated,
     userRole,
+    hasValidProfile,
     
     // Actions
     initialize,
