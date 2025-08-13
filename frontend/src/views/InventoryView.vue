@@ -58,6 +58,14 @@
           Filters
         </button>
         <button 
+          @click="exportInventory" 
+          class="btn-antique-secondary"
+          title="Export to Excel"
+        >
+          <Download class="w-4 h-4 mr-2" />
+          Export
+        </button>
+        <button 
           @click="router.push('/inventory/new')" 
           class="btn-antique"
         >
@@ -136,10 +144,18 @@
             />
           </div>
         </div>
-        <div class="flex items-end">
+        <div class="flex items-end space-x-2">
+          <button 
+            @click="exportInventory" 
+            class="flex-1 btn-antique"
+            title="Export filtered results to Excel"
+          >
+            <Download class="w-4 h-4 mr-2" />
+            Export
+          </button>
           <button 
             @click="clearFilters" 
-            class="w-full btn-antique-secondary"
+            class="flex-1 btn-antique-secondary"
           >
             Clear Filters
           </button>
@@ -456,7 +472,8 @@ import {
   XCircle,
   AlertTriangle,
   AlertCircle,
-  X
+  X,
+  Download
 } from 'lucide-vue-next'
 import type { InventoryItem, InventoryFilters } from '@/types'
 
@@ -722,6 +739,30 @@ const confirmDelete = async () => {
     }
   } finally {
     isDeleting.value = false
+  }
+}
+
+const exportInventory = async () => {
+  try {
+    // Show loading state
+    isLoading.value = true
+    
+    // Check if we have filtered results or all items
+    if (searchQuery.value.trim() || filters.value.category || filters.value.status || 
+        filters.value.minPrice !== undefined || filters.value.maxPrice !== undefined) {
+      // Export filtered results
+      inventoryStore.exportFilteredToExcel('inventory-filtered')
+      toast.success('Filtered inventory exported successfully!')
+    } else {
+      // Export all inventory
+      inventoryStore.exportToExcel('inventory-all')
+      toast.success('All inventory exported successfully!')
+    }
+  } catch (error) {
+    console.error('Export failed:', error)
+    toast.error('Failed to export inventory data')
+  } finally {
+    isLoading.value = false
   }
 }
 

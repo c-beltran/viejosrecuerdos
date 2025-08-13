@@ -11,6 +11,7 @@ import {
   PaginationState
 } from '@/types'
 import ApiService from '@/utils/api'
+import { exportInventoryToExcel, exportFilteredInventoryToExcel } from '@/utils/exportUtils'
 
 export const useInventoryStore = defineStore('inventory', () => {
   // State
@@ -404,6 +405,26 @@ export const useInventoryStore = defineStore('inventory', () => {
     filters.value.search = ''
   }
 
+  // Export inventory to Excel
+  const exportToExcel = (filename?: string) => {
+    try {
+      exportInventoryToExcel(items.value, filename)
+    } catch (error) {
+      console.error('Failed to export inventory:', error)
+      throw error
+    }
+  }
+
+  // Export filtered inventory to Excel
+  const exportFilteredToExcel = (filename?: string) => {
+    try {
+      exportFilteredInventoryToExcel(items.value, filters.value, filename)
+    } catch (error) {
+      console.error('Failed to export filtered inventory:', error)
+      throw error
+    }
+  }
+
   // Reset store
   const reset = () => {
     items.value = []
@@ -458,6 +479,8 @@ export const useInventoryStore = defineStore('inventory', () => {
     clearFilters,
     updateSearchFilter,
     clearSearchFilter,
+    exportToExcel,
+    exportFilteredToExcel,
     reset
   }
 }) 
