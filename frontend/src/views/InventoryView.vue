@@ -42,14 +42,6 @@
       </div>
       <div class="flex items-center space-x-3 mt-4 lg:mt-0">
         <button 
-          @click="toggleViewMode" 
-          class="btn-antique-secondary"
-          title="Toggle view mode"
-        >
-          <Grid v-if="viewMode === 'list'" class="w-4 h-4" />
-          <List v-else class="w-4 h-4" />
-        </button>
-        <button 
           @click="showFilters = !showFilters" 
           class="btn-antique-secondary"
           :class="{ 'bg-antique-gold text-white': showFilters }"
@@ -160,6 +152,41 @@
             Clear Filters
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- View Mode Toggle and Item Count -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <button
+            @click="viewMode = 'grid'"
+            :class="[
+              'p-2 rounded-lg transition-colors',
+              viewMode === 'grid' 
+                ? 'bg-antique-gold text-white' 
+                : 'text-vintage-gray hover:bg-vintage-beige'
+            ]"
+            title="Grid View"
+          >
+            <Grid class="w-5 h-5" />
+          </button>
+          <button
+            @click="viewMode = 'list'"
+            :class="[
+              'p-2 rounded-lg transition-colors',
+              viewMode === 'list' 
+                ? 'bg-antique-gold text-white' 
+                : 'text-vintage-gray hover:bg-vintage-beige'
+            ]"
+            title="List View"
+          >
+            <List class="w-5 h-5" />
+          </button>
+        </div>
+        <span class="text-sm text-vintage-gray">
+          {{ filteredItems.length }} of {{ totalItems }} items
+        </span>
       </div>
     </div>
 
@@ -567,6 +594,8 @@ const filteredItems = computed(() => {
   return filtered
 })
 
+const totalItems = computed(() => inventoryStore.totalItems)
+
 const paginatedItems = computed(() => {
   // Use items directly from store instead of client-side filtering
   return inventoryStore.items
@@ -677,9 +706,7 @@ const clearSearch = () => {
   loadInventory()
 }
 
-const toggleViewMode = () => {
-  viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid'
-}
+
 
 const handlePageChange = (newPage: number) => {
   // Validate page bounds
