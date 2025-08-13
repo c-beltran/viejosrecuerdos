@@ -85,15 +85,15 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/clients/:id',
-      name: 'client-detail',
-      component: ClientDetailView,
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/clients/:id/edit',
       name: 'client-edit',
       component: ClientFormView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/clients/:id',
+      name: 'client-detail',
+      component: ClientDetailView,
       meta: { requiresAuth: true }
     },
     {

@@ -68,6 +68,8 @@ export const useClientStore = defineStore('client', () => {
         if (response.count !== undefined) {
           pagination.value.total = response.count
         }
+        // Calculate total pages
+        pagination.value.totalPages = Math.ceil(pagination.value.total / pagination.value.limit)
       } else {
         throw new Error(response.error || 'Failed to fetch clients')
       }
@@ -82,10 +84,16 @@ export const useClientStore = defineStore('client', () => {
 
   // Fetch single client
   const fetchClient = async (clientId: string) => {
+    // Safety check to prevent API calls with invalid IDs
+    if (!clientId || clientId === 'undefined' || clientId === 'new') {
+      console.warn('fetchClient called with invalid ID:', clientId)
+      throw new Error('Invalid client ID')
+    }
+    
     try {
       setLoading(true)
       
-      const response = await ApiService.get<Client>(`/clients/${clientId}`)
+      const response = await ApiService.get<Client>(`/clients/item/${clientId}`)
       
       if (response.success && response.data) {
         currentClient.value = response.data
@@ -130,7 +138,7 @@ export const useClientStore = defineStore('client', () => {
     try {
       setLoading(true)
       
-      const response = await ApiService.put<Client>(`/clients/${clientId}`, updateData)
+      const response = await ApiService.put<Client>(`/clients/item/${clientId}`, updateData)
       
       if (response.success && response.data) {
         const index = clients.value.findIndex(client => client.clientId === clientId)
@@ -148,7 +156,6 @@ export const useClientStore = defineStore('client', () => {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update client'
-      setLoading(false, errorMessage)
       throw err
     } finally {
       setLoading(false)
@@ -160,7 +167,7 @@ export const useClientStore = defineStore('client', () => {
     try {
       setLoading(true)
       
-      const response = await ApiService.delete(`/clients/${clientId}`)
+      const response = await ApiService.delete(`/clients/item/${clientId}`)
       
       if (response.success) {
         clients.value = clients.value.filter(client => client.clientId !== clientId)
@@ -176,7 +183,6 @@ export const useClientStore = defineStore('client', () => {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete client'
-      setLoading(false, errorMessage)
       throw err
     } finally {
       setLoading(false)

@@ -113,6 +113,13 @@ export interface UpdateClientRequest {
   notes?: string;
 }
 
+export interface ClientFilters {
+  search?: string;
+  email?: string;
+  limit?: number;
+  offset?: number;
+}
+
 // Sales types
 export interface Sale extends BaseEntity {
   saleId: string;
@@ -217,11 +224,7 @@ export interface InventoryFilters {
   includeQR?: boolean;
 }
 
-export interface ClientFilters {
-  search?: string;
-  limit?: number;
-  offset?: number;
-}
+
 
 export interface SaleFilters {
   status?: SaleStatus;
