@@ -18,8 +18,15 @@ router.delete('/plans/:planId', installmentController.deleteInstallmentPlan);
 
 // Installment Payments routes
 router.post('/payments', installmentController.createPayment);
+router.get('/payments', installmentController.getAllPayments);
+router.get('/payments/overdue', installmentController.getOverduePayments);
+router.get('/payments/status/:status', installmentController.getPaymentsByStatus);
 router.get('/plans/:planId/payments', installmentController.getPaymentsByPlanId);
 router.put('/payments/:paymentId', installmentController.updatePayment);
 router.delete('/payments/:paymentId', installmentController.deletePayment);
+
+// Enhanced Installment Plans routes
+router.get('/plans/sale/:saleId', installmentController.getInstallmentPlansBySale);
+router.get('/plans/client/:clientId', installmentController.getInstallmentPlansByClient);
 
 module.exports = router; 

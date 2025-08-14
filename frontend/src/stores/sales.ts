@@ -258,6 +258,7 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
+      // Use the correct endpoint: /api/installments/plans
       const url = saleId ? `/installments/plans?saleId=${saleId}` : '/installments/plans'
       const response = await ApiService.get<InstallmentPlan[]>(url)
       
@@ -280,6 +281,7 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
+      // Use the correct endpoint: /api/installments/plans/{planId}
       const response = await ApiService.get<InstallmentPlan>(`/installments/plans/${planId}`)
       
       if (response.success && response.data) {
@@ -301,6 +303,7 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
+      // Use the correct endpoint: POST /api/installments/plans
       const response = await ApiService.post<InstallmentPlan>('/installments/plans', planData)
       
       if (response.success && response.data) {
@@ -322,6 +325,7 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
+      // Use the correct endpoint: PUT /api/installments/plans/{planId}
       const response = await ApiService.put<InstallmentPlan>(`/installments/plans/${planId}`, updateData)
       
       if (response.success && response.data) {
@@ -352,7 +356,9 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
-      const url = planId ? `/installments/payments?planId=${planId}` : '/installments/payments'
+      // Use the correct endpoint: GET /api/installments/plans/{planId}/payments for specific plan
+      // or GET /api/installments/payments for all payments
+      const url = planId ? `/installments/plans/${planId}/payments` : '/installments/payments'
       const response = await ApiService.get<InstallmentPayment[]>(url)
       
       if (response.success && response.data) {
@@ -419,6 +425,7 @@ export const useSalesStore = defineStore('sales', () => {
   // Get installment plan summary
   const getInstallmentPlanSummary = async (planId: string) => {
     try {
+      // Use the correct endpoint: GET /api/installments/plans/{planId}/summary
       const response = await ApiService.get(`/installments/plans/${planId}/summary`)
       
       if (response.success) {

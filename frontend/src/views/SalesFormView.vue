@@ -489,6 +489,10 @@
                 <div class="text-lg font-bold text-vintage-charcoal">
                   ${{ formatCurrency(installmentAmount) }}
                 </div>
+                <!-- Note about last installment adjustment -->
+                <div class="text-xs text-blue-600 mt-1">
+                  <span class="font-medium">Note:</span> Last installment may be adjusted to ensure total adds up exactly
+                </div>
               </div>
             </div>
           </div>
@@ -532,6 +536,7 @@ import { useToast } from 'vue-toastification'
 import { useSalesStore } from '@/stores/sales'
 import { useInventoryStore } from '@/stores/inventory'
 import { useClientStore } from '@/stores/client'
+import { useAuthStore } from '@/stores/auth'
 import { 
   ArrowLeft,
   X,
@@ -553,6 +558,7 @@ const toast = useToast()
 const salesStore = useSalesStore()
 const inventoryStore = useInventoryStore()
 const clientStore = useClientStore()
+const authStore = useAuthStore()
 
 // Reactive state
 const isLoading = ref(false)
@@ -758,7 +764,8 @@ const totalAmount = computed(() => subtotal.value)
 const installmentAmount = computed(() => {
   if (paymentOption.value === 'installment' && installmentPlan.value.numberOfInstallments > 0) {
     const remaining = totalAmount.value - installmentPlan.value.downPayment
-    return remaining / installmentPlan.value.numberOfInstallments
+    // Round to 2 decimal places to avoid floating point precision issues
+    return Math.round((remaining / installmentPlan.value.numberOfInstallments) * 100) / 100
   }
   return 0
 })
@@ -1103,21 +1110,50 @@ const saveSale = async () => {
       // If installment plan selected, create it
       if (paymentOption.value === 'installment' && sale) {
         try {
+          // Ensure we have a valid user ID for createdBy
+          if (!authStore.user?.id) {
+            throw new Error('User not authenticated. Please log in again.')
+          }
+          
+          // Calculate installment amounts ensuring they add up exactly to the total
+          const remainingAfterDownPayment = sale.totalAmount - installmentPlan.value.downPayment
+          const baseInstallmentAmount = Math.floor((remainingAfterDownPayment / installmentPlan.value.numberOfInstallments) * 100) / 100
+          const lastInstallmentAmount = remainingAfterDownPayment - (baseInstallmentAmount * (installmentPlan.value.numberOfInstallments - 1))
+          
+          console.log('Installment calculation:', {
+            totalAmount: sale.totalAmount,
+            downPayment: installmentPlan.value.downPayment,
+            remainingAfterDownPayment,
+            baseInstallmentAmount,
+            lastInstallmentAmount,
+            numberOfInstallments: installmentPlan.value.numberOfInstallments
+          })
+          
+          // Verify the calculation adds up exactly
+          const calculatedTotal = installmentPlan.value.downPayment + (baseInstallmentAmount * (installmentPlan.value.numberOfInstallments - 1)) + lastInstallmentAmount
+          console.log('Verification - calculated total:', calculatedTotal, 'should equal:', sale.totalAmount)
+          
           const installmentData = {
             saleId: sale.saleId,
             totalAmount: sale.totalAmount,
             downPayment: installmentPlan.value.downPayment,
-            installmentAmount: installmentAmount.value,
+            installmentAmount: baseInstallmentAmount, // Use calculated base amount
             numberOfInstallments: installmentPlan.value.numberOfInstallments,
             installmentFrequency: installmentPlan.value.installmentFrequency,
-            startDate: new Date().toISOString(),
-            dueDate: new Date(Date.now() + (installmentPlan.value.numberOfInstallments * 30 * 24 * 60 * 60 * 1000)).toISOString(), // 30 days per installment
+            startDate: new Date().toISOString().split('T')[0], // Send only the date part (YYYY-MM-DD)
+            dueDate: new Date(Date.now() + (installmentPlan.value.numberOfInstallments * 30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // Send only the date part (YYYY-MM-DD)
             status: 'Active',
-            notes: `Installment plan for sale ${sale.saleId}`,
-            createdBy: 'system' // This should come from auth store
+            notes: `Installment plan for sale ${sale.saleId}. Last installment adjusted to $${lastInstallmentAmount.toFixed(2)} to ensure total adds up exactly.`,
+            createdBy: authStore.user.id // Use authenticated user ID (UUID)
           }
           
           console.log('Creating installment plan:', installmentData)
+          console.log('Current user:', authStore.user)
+          console.log('User ID:', authStore.user?.id)
+          console.log('User name:', authStore.user?.name)
+          console.log('Is authenticated:', authStore.isAuthenticated)
+          console.log('Auth token available:', !!(await authStore.getAuthToken()))
+          
           const installmentPlanResult = await salesStore.createInstallmentPlan(installmentData)
           console.log('Installment plan created:', installmentPlanResult)
           

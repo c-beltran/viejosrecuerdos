@@ -62,6 +62,36 @@
       </div>
     </div>
 
+    <!-- Filters -->
+    <div class="card-antique p-6 mb-6">
+      <div class="flex flex-col lg:flex-row gap-4 items-center">
+        <div class="flex-1">
+          <label class="block text-sm font-medium text-vintage-charcoal mb-2">Filter by Status</label>
+          <select
+            v-model="statusFilter"
+            @change="applyFilters"
+            class="w-full lg:w-48 px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+          >
+            <option value="">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+            <option value="Defaulted">Defaulted</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        
+        <div class="flex gap-2">
+          <button
+            @click="loadInstallments"
+            class="btn-primary flex items-center gap-2"
+          >
+            <RefreshCw class="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Installment Plans List -->
     <div class="card-antique overflow-hidden">
       <div class="p-6 border-b border-vintage-beige">
@@ -100,7 +130,7 @@
           </thead>
           <tbody class="bg-white divide-y divide-vintage-beige">
             <tr
-              v-for="plan in installmentPlans"
+              v-for="plan in filteredInstallmentPlans"
               :key="plan.planId"
               class="hover:bg-vintage-ivory transition-colors"
             >
@@ -164,6 +194,241 @@
       <p class="text-vintage-gray mb-4">{{ error }}</p>
       <button @click="loadInstallments" class="btn-primary">Try Again</button>
     </div>
+    
+    <!-- Payment Recording Modal -->
+    <div v-if="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-vintage-beige">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-vintage-charcoal">Record Payment</h3>
+            <button @click="closePaymentModal" class="text-vintage-gray hover:text-vintage-charcoal">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <div class="space-y-4">
+            <!-- Plan Summary -->
+            <div class="bg-vintage-ivory p-4 rounded-lg">
+              <h4 class="font-medium text-vintage-charcoal mb-2">Plan Summary</h4>
+              <div class="text-sm text-vintage-gray space-y-1">
+                <div>Client: {{ getClientName(selectedPlan?.saleId || '') }}</div>
+                <div>Total: ${{ formatCurrency(selectedPlan?.totalAmount || 0) }}</div>
+                <div>Down Payment: ${{ formatCurrency(selectedPlan?.downPayment || 0) }}</div>
+                <div>Additional Payments: ${{ formatCurrency(getAmountPaid(selectedPlan?.planId || '') - (selectedPlan?.downPayment || 0)) }}</div>
+                <div class="font-medium text-vintage-charcoal">Remaining: ${{ formatCurrency(getRemainingAmount(selectedPlan)) }}</div>
+              </div>
+            </div>
+            
+            <!-- Payment Form -->
+            <div>
+              <label class="block text-sm font-medium text-vintage-charcoal mb-2">
+                Payment Amount
+              </label>
+              <input
+                v-model="paymentForm.amount"
+                type="number"
+                step="0.01"
+                min="0"
+                :max="getRemainingAmount(selectedPlan)"
+                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+                placeholder="Enter payment amount"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-vintage-charcoal mb-2">
+                Payment Date
+              </label>
+              <input
+                v-model="paymentForm.paymentDate"
+                type="date"
+                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-vintage-charcoal mb-2">
+                Payment Method
+              </label>
+              <select
+                v-model="paymentForm.paymentMethod"
+                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="Check">Check</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-vintage-charcoal mb-2">
+                Notes (Optional)
+              </label>
+              <textarea
+                v-model="paymentForm.notes"
+                rows="3"
+                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+                placeholder="Additional notes about this payment"
+              ></textarea>
+            </div>
+            
+            <!-- Payment Preview -->
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <div class="text-sm text-blue-800">
+                <div class="font-medium mb-1">Payment Preview:</div>
+                <div>After this payment of ${{ formatCurrency(paymentForm.amount || 0) }}:</div>
+                <div class="font-medium">New Total Paid: ${{ formatCurrency(getNewTotalPaid()) }}</div>
+                <div class="font-medium">New Remaining: ${{ formatCurrency(getNewRemaining()) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6 border-t border-vintage-beige flex gap-3">
+          <button
+            @click="closePaymentModal"
+            class="btn-secondary flex-1"
+          >
+            Cancel
+          </button>
+          <button
+            @click="submitPayment"
+            :disabled="!canSubmitPayment"
+            class="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Record Payment
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Plan Details Modal -->
+    <div v-if="showPlanDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-vintage-beige">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-vintage-charcoal">Plan Details</h3>
+            <button @click="closePlanDetailsModal" class="text-vintage-gray hover:text-vintage-charcoal">
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <div v-if="selectedPlan" class="space-y-6">
+            <!-- Plan Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <h4 class="font-medium text-vintage-charcoal">Plan Information</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Plan ID:</span>
+                    <span class="text-vintage-charcoal font-mono">{{ selectedPlan.planId?.slice(0, 8) }}...</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Status:</span>
+                    <span :class="getStatusBadgeClass(selectedPlan.status)">{{ selectedPlan.status }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Total Amount:</span>
+                    <span class="text-vintage-charcoal">${{ formatCurrency(selectedPlan.totalAmount) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Down Payment:</span>
+                    <span class="text-vintage-charcoal">${{ formatCurrency(selectedPlan.downPayment) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Installments:</span>
+                    <span class="text-vintage-charcoal">{{ selectedPlan.numberOfInstallments }} × ${{ formatCurrency(selectedPlan.installmentAmount) }}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="space-y-4">
+                <h4 class="font-medium text-vintage-charcoal">Payment Schedule</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Start Date:</span>
+                    <span class="text-vintage-charcoal">{{ formatDate(selectedPlan.startDate) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Due Date:</span>
+                    <span class="text-vintage-charcoal">{{ formatDate(selectedPlan.dueDate) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Frequency:</span>
+                    <span class="text-vintage-charcoal">{{ selectedPlan.installmentFrequency }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Amount Paid:</span>
+                    <span class="text-vintage-charcoal">${{ formatCurrency(getAmountPaid(selectedPlan.planId)) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-vintage-gray">Remaining:</span>
+                    <span class="text-vintage-charcoal">${{ formatCurrency(getRemainingAmount(selectedPlan)) }}</span>
+                  </div>
+                  <!-- Payment Breakdown -->
+                  <div class="flex justify-between text-xs text-vintage-gray">
+                    <span>Down Payment:</span>
+                    <span>${{ formatCurrency(selectedPlan.downPayment || 0) }}</span>
+                  </div>
+                  <div class="flex justify-between text-xs text-vintage-gray">
+                    <span>Additional Payments:</span>
+                    <span>${{ formatCurrency(getAmountPaid(selectedPlan.planId) - (selectedPlan.downPayment || 0)) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Payment History -->
+            <div>
+              <h4 class="font-medium text-vintage-charcoal mb-4">Payment History</h4>
+              <div v-if="selectedPlanPayments.length > 0" class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-vintage-beige">
+                    <tr>
+                      <th class="px-4 py-2 text-left text-xs font-medium text-vintage-charcoal">Date</th>
+                      <th class="px-4 py-2 text-left text-xs font-medium text-vintage-charcoal">Amount</th>
+                      <th class="px-4 py-2 text-left text-xs font-medium text-vintage-charcoal">Method</th>
+                      <th class="px-4 py-2 text-left text-xs font-medium text-vintage-charcoal">Status</th>
+                      <th class="px-4 py-2 text-left text-xs font-medium text-vintage-charcoal">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-vintage-beige">
+                    <tr v-for="payment in selectedPlanPayments" :key="payment.paymentId" class="hover:bg-vintage-ivory">
+                      <td class="px-4 py-2 text-sm text-vintage-charcoal">{{ formatDate(payment.paymentDate) }}</td>
+                      <td class="px-4 py-2 text-sm text-vintage-charcoal">${{ formatCurrency(payment.amount) }}</td>
+                      <td class="px-4 py-2 text-sm text-vintage-charcoal">{{ formatPaymentMethod(payment.paymentMethod) }}</td>
+                      <td class="px-4 py-2 text-sm text-vintage-charcoal">
+                        <span :class="getPaymentStatusBadgeClass(payment.status)">{{ payment.status }}</span>
+                      </td>
+                      <td class="px-4 py-2 text-sm text-vintage-gray">{{ payment.notes || '-' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div v-else class="text-center py-8 text-vintage-gray">
+                <CreditCard class="w-16 h-16 mx-auto mb-4 text-vintage-beige" />
+                <p>No payments recorded yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-6 border-t border-vintage-beige">
+          <button
+            @click="closePlanDetailsModal"
+            class="btn-secondary w-full"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -178,9 +443,12 @@ import {
   Clock,
   DollarSign,
   AlertTriangle,
-  AlertCircle
+  AlertCircle,
+  X,
+  CreditCard,
+  RefreshCw
 } from 'lucide-vue-next'
-import type { InstallmentPlan, Sale } from '@/types'
+import type { InstallmentPlan, Sale, InstallmentPayment } from '@/types'
 
 // Composables
 const router = useRouter()
@@ -193,6 +461,23 @@ const isLoading = ref(false)
 const error = ref<string | null>(null)
 const installmentPlans = ref<InstallmentPlan[]>([])
 const sales = ref<Sale[]>([])
+
+// Modal state
+const showPaymentModal = ref(false)
+const showPlanDetailsModal = ref(false)
+const selectedPlan = ref<InstallmentPlan | null>(null)
+const selectedPlanPayments = ref<InstallmentPayment[]>([])
+
+// Payment form
+const paymentForm = ref({
+  amount: 0,
+  paymentDate: new Date().toISOString().split('T')[0],
+  paymentMethod: 'cash',
+  notes: ''
+})
+
+// Filters
+const statusFilter = ref('')
 
 // Computed properties
 const activePlansCount = computed(() => 
@@ -217,16 +502,55 @@ const overduePaymentsCount = computed(() => {
   }).length
 })
 
+const canSubmitPayment = computed(() => {
+  if (!selectedPlan.value) return false
+  const amount = parseFloat(paymentForm.value.amount.toString())
+  const remaining = getRemainingAmount(selectedPlan.value)
+  
+  // Debug logging
+  console.log('Payment validation:', {
+    amount,
+    remaining,
+    isValid: amount > 0 && amount <= remaining
+  })
+  
+  return amount > 0 && amount <= remaining
+})
+
+// Helper functions for payment preview calculations
+const getNewTotalPaid = () => {
+  if (!selectedPlan.value) return 0
+  const currentPaid = getAmountPaid(selectedPlan.value.planId)
+  const newPayment = paymentForm.value.amount || 0
+  return currentPaid + newPayment
+}
+
+const getNewRemaining = () => {
+  if (!selectedPlan.value) return 0
+  const currentRemaining = getRemainingAmount(selectedPlan.value)
+  const newPayment = paymentForm.value.amount || 0
+  return currentRemaining - newPayment
+}
+
+const filteredInstallmentPlans = computed(() => {
+  if (!statusFilter.value) return installmentPlans.value
+  
+  return installmentPlans.value.filter(plan => 
+    plan.status === statusFilter.value
+  )
+})
+
 // Methods
 const loadInstallments = async () => {
   try {
     isLoading.value = true
     error.value = null
     
-    // Load installment plans and sales
+    // Load installment plans, sales, and payments
     await Promise.all([
       salesStore.fetchInstallmentPlans(),
-      salesStore.fetchSales()
+      salesStore.fetchSales(),
+      salesStore.fetchPayments()
     ])
     
     installmentPlans.value = salesStore.installmentPlans
@@ -247,9 +571,24 @@ const getClientName = (saleId: string) => {
 }
 
 const getAmountPaid = (planId: string) => {
-  // This would calculate from actual payments
-  // For now, return a placeholder
-  return 0
+  // Find the installment plan to get the down payment
+  const plan = salesStore.installmentPlans.find(p => p.planId === planId)
+  if (!plan) return 0
+  
+  // Include the down payment that was made when the sale was created
+  let totalPaid = plan.downPayment || 0
+  
+  // Add any additional installment payments
+  const payments = salesStore.payments.filter(p => p.planId === planId)
+  totalPaid += payments.reduce((sum, payment) => sum + (payment.amount || 0), 0)
+  
+  return totalPaid
+}
+
+const getRemainingAmount = (plan: InstallmentPlan | null) => {
+  if (!plan) return 0
+  const amountPaid = getAmountPaid(plan.planId)
+  return plan.totalAmount - amountPaid
 }
 
 const getStatusBadgeClass = (status: string) => {
@@ -269,23 +608,133 @@ const getStatusBadgeClass = (status: string) => {
   }
 }
 
+const getPaymentStatusBadgeClass = (status: string) => {
+  const baseClasses = 'px-2 py-1 text-xs font-medium rounded-full'
+  
+  switch (status) {
+    case 'Completed':
+      return `${baseClasses} bg-green-100 text-green-800`
+    case 'Pending':
+      return `${baseClasses} bg-yellow-100 text-yellow-800`
+    case 'Failed':
+      return `${baseClasses} bg-red-100 text-red-800`
+    case 'Refunded':
+      return `${baseClasses} bg-gray-100 text-gray-800`
+    default:
+      return `${baseClasses} bg-gray-100 text-gray-800`
+  }
+}
+
+const formatPaymentMethod = (method: string) => {
+  // The values are now already properly formatted, just return as is
+  return method || 'Unknown'
+}
+
 const formatCurrency = (amount: number) => {
   return amount.toFixed(2)
 }
 
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString()
+  try {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}-${month}-${year}` // Returns DD-MM-YYYY format
+  } catch (err) {
+    console.error('Error formatting date:', err)
+    return dateString // Fallback to original string
+  }
 }
 
-const viewPlanDetails = (plan: InstallmentPlan) => {
-  // TODO: Navigate to plan details view
-  toast.info('Plan details view coming soon')
+const viewPlanDetails = async (plan: InstallmentPlan) => {
+  selectedPlan.value = plan
+  showPlanDetailsModal.value = true
+  
+  try {
+    // Load payments for this plan
+    const payments = await salesStore.fetchPayments(plan.planId)
+    selectedPlanPayments.value = payments || []
+    
+    // Debug: Log plan details and calculations
+    console.log('Plan Details Modal - Plan:', plan)
+    console.log('Plan Details Modal - Down Payment:', plan.downPayment)
+    console.log('Plan Details Modal - Total Amount:', plan.totalAmount)
+    console.log('Plan Details Modal - Amount Paid (calculated):', getAmountPaid(plan.planId))
+    console.log('Plan Details Modal - Remaining (calculated):', getRemainingAmount(plan))
+    console.log('Plan Details Modal - Payments loaded:', selectedPlanPayments.value)
+    
+  } catch (err) {
+    console.error('Error loading payments:', err)
+    selectedPlanPayments.value = []
+    toast.error('Failed to load payment history')
+  }
 }
 
 const recordPayment = (plan: InstallmentPlan) => {
-  // TODO: Open payment recording modal
-  toast.info('Payment recording coming soon')
+  selectedPlan.value = plan
+  paymentForm.value = {
+    amount: 0,
+    paymentDate: new Date().toISOString().split('T')[0],
+    paymentMethod: 'Cash',
+    notes: ''
+  }
+  showPaymentModal.value = true
+}
+
+const closePaymentModal = () => {
+  showPaymentModal.value = false
+  selectedPlan.value = null
+  paymentForm.value = {
+    amount: 0,
+    paymentDate: new Date().toISOString().split('T')[0],
+    paymentMethod: 'Cash',
+    notes: ''
+  }
+}
+
+const closePlanDetailsModal = () => {
+  showPlanDetailsModal.value = false
+  selectedPlan.value = null
+  selectedPlanPayments.value = []
+}
+
+const submitPayment = async () => {
+  if (!selectedPlan.value) return
+  
+  try {
+    // Calculate the next payment number
+    const existingPayments = salesStore.payments.filter(p => p.planId === selectedPlan.value.planId)
+    const nextPaymentNumber = existingPayments.length + 1
+    
+    const paymentData = {
+      planId: selectedPlan.value.planId,
+      paymentNumber: nextPaymentNumber, // Add the required paymentNumber field
+      amount: parseFloat(paymentForm.value.amount.toString()),
+      paymentDate: paymentForm.value.paymentDate,
+      paymentMethod: paymentForm.value.paymentMethod,
+      notes: paymentForm.value.notes
+    }
+    
+    console.log('Submitting payment data:', paymentData)
+    
+    await salesStore.createPayment(paymentData)
+    
+    toast.success('Payment recorded successfully')
+    closePaymentModal()
+    
+    // Refresh the data
+    await loadInstallments()
+    
+  } catch (err) {
+    console.error('Error recording payment:', err)
+    toast.error('Failed to record payment')
+  }
+}
+
+const applyFilters = () => {
+  // Filters are applied automatically through computed properties
+  // This method can be extended for additional filtering logic
 }
 
 const goBack = () => {

@@ -226,10 +226,16 @@ class InstallmentController {
    */
   async createInstallmentPlan(req, res) {
     try {
+      console.log('Creating installment plan - Request body:', req.body);
+      console.log('Request user object:', req.user);
+      console.log('User ID from middleware:', req.user?.id);
+      
       const planData = {
         ...req.body,
-        createdBy: req.user.user_id
+        createdBy: req.user.id
       };
+      
+      console.log('Final plan data being sent to service:', planData);
 
       const plan = await installmentService.createInstallmentPlan(planData);
       res.status(201).json({
@@ -678,7 +684,7 @@ class InstallmentController {
     try {
       const paymentData = {
         ...req.body,
-        receivedBy: req.user.user_id
+        receivedBy: req.user.id
       };
 
       const payment = await installmentService.createPayment(paymentData);
@@ -1040,6 +1046,398 @@ class InstallmentController {
       });
     } catch (error) {
       console.error('Error getting installment plans by status:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/installments/payments:
+   *   get:
+   *     summary: Get all payments
+   *     tags: [Payments]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: planId
+   *         schema:
+   *           type: string
+   *         description: Filter payments by plan ID
+   *       - in: query
+   *         name: status
+   *         schema:
+   *           type: string
+   *           enum: [Pending, Completed, Failed, Refunded]
+   *         description: Filter payments by status
+   *       - in: query
+   *         name: startDate
+   *         schema:
+   *           type: string
+   *           format: date
+   *         description: Filter payments from this date
+   *       - in: query
+   *         name: endDate
+   *         schema:
+   *           type: string
+   *           format: date
+   *         description: Filter payments until this date
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: Page number for pagination
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 20
+   *         description: Number of items per page
+   *     responses:
+   *       200:
+   *         description: List of payments retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/SuccessResponse'
+   *                 - type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/Payment'
+   *                     count:
+   *                       type: integer
+   *                       description: Total number of payments
+   *       401:
+   *         description: Unauthorized - Authentication required
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async getAllPayments(req, res) {
+    try {
+      const filters = {
+        planId: req.query.planId,
+        status: req.query.status,
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+        page: parseInt(req.query.page) || 1,
+        limit: parseInt(req.query.limit) || 20
+      };
+
+      const result = await installmentService.getAllPayments(filters);
+      
+      res.status(200).json({
+        success: true,
+        data: result.payments,
+        count: result.total,
+        page: result.page,
+        totalPages: result.totalPages
+      });
+    } catch (error) {
+      console.error('Error getting all payments:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/installments/payments/overdue:
+   *   get:
+   *     summary: Get overdue payments
+   *     tags: [Payments]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: Page number for pagination
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 20
+   *         description: Number of items per page
+   *     responses:
+   *       200:
+   *         description: List of overdue payments retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/SuccessResponse'
+   *                 - type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/Payment'
+   *                     count:
+   *                       type: integer
+   *                       description: Total number of overdue payments
+   *       401:
+   *         description: Unauthorized - Authentication required
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async getOverduePayments(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+
+      const result = await installmentService.getOverduePayments(page, limit);
+      
+      res.status(200).json({
+        success: true,
+        data: result.payments,
+        count: result.total,
+        page: result.page,
+        totalPages: result.totalPages
+      });
+    } catch (error) {
+      console.error('Error getting overdue payments:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/installments/payments/status/{status}:
+   *   get:
+   *     summary: Get payments by status
+   *     tags: [Payments]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: status
+   *         required: true
+   *         schema:
+   *           type: string
+   *           enum: [Pending, Completed, Failed, Refunded]
+   *         description: Payment status to filter by
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: Page number for pagination
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 20
+   *         description: Number of items per page
+   *     responses:
+   *       200:
+   *         description: List of payments by status retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/SuccessResponse'
+   *                 - type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/Payment'
+   *                     count:
+   *                       type: integer
+   *                       description: Total number of payments with this status
+   *       400:
+   *         description: Bad request - Invalid status
+   *       401:
+   *         description: Unauthorized - Authentication required
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async getPaymentsByStatus(req, res) {
+    try {
+      const { status } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+
+      const result = await installmentService.getPaymentsByStatus(status, page, limit);
+      
+      res.status(200).json({
+        success: true,
+        data: result.payments,
+        count: result.total,
+        page: result.page,
+        totalPages: result.totalPages
+      });
+    } catch (error) {
+      console.error('Error getting payments by status:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/installments/plans/sale/{saleId}:
+   *   get:
+   *     summary: Get installment plans by sale ID
+   *     tags: [Installments]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: saleId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID of the sale
+   *     responses:
+   *       200:
+   *         description: List of installment plans for the sale retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/SuccessResponse'
+   *                 - type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/InstallmentPlan'
+   *                     count:
+   *                       type: integer
+   *                       description: Total number of installment plans for this sale
+   *       400:
+   *         description: Bad request - Invalid sale ID
+   *       401:
+   *         description: Unauthorized - Authentication required
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async getInstallmentPlansBySale(req, res) {
+    try {
+      const { saleId } = req.params;
+      const plans = await installmentService.getInstallmentPlansBySale(saleId);
+      
+      res.status(200).json({
+        success: true,
+        data: plans,
+        count: plans.length
+      });
+    } catch (error) {
+      console.error('Error getting installment plans by sale:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/installments/plans/client/{clientId}:
+   *   get:
+   *     summary: Get installment plans by client ID
+   *     tags: [Installments]
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: clientId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: ID of the client
+   *       - in: query
+   *         name: page
+   *         schema:
+   *           type: integer
+   *           default: 1
+   *         description: Page number for pagination
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *           default: 20
+   *         description: Number of items per page
+   *     responses:
+   *       200:
+   *         description: List of installment plans for the client retrieved successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               allOf:
+   *                 - $ref: '#/components/schemas/SuccessResponse'
+   *                 - type: object
+   *                   properties:
+   *                     data:
+   *                       type: array
+   *                       items:
+   *                         $ref: '#/components/schemas/InstallmentPlan'
+   *                     count:
+   *                       type: integer
+   *                       description: Total number of installment plans for this client
+   *       400:
+   *         description: Bad request - Invalid client ID
+   *       401:
+   *         description: Unauthorized - Authentication required
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
+  async getInstallmentPlansByClient(req, res) {
+    try {
+      const { clientId } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+
+      const result = await installmentService.getInstallmentPlansByClient(clientId, page, limit);
+      
+      res.status(200).json({
+        success: true,
+        data: result.plans,
+        count: result.total,
+        page: result.page,
+        totalPages: result.totalPages
+      });
+    } catch (error) {
+      console.error('Error getting installment plans by client:', error);
       res.status(500).json({
         success: false,
         error: error.message

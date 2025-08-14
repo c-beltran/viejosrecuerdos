@@ -157,6 +157,15 @@
 
     <!-- Sales List -->
     <div class="card-antique overflow-hidden">
+      <!-- Installment Summary -->
+      <div v-if="salesStore.installmentPlans.length > 0" class="px-6 py-3 bg-blue-50 border-b border-blue-200">
+        <div class="text-sm text-blue-800">
+          <span class="font-medium">📊 Installment Summary:</span>
+          <span class="ml-2">{{ salesStore.installmentPlans.length }} active installment plans</span>
+          <span class="ml-4">Total outstanding: ${{ formatCurrency(getTotalOutstandingAmount()) }}</span>
+        </div>
+      </div>
+      
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-vintage-beige">
@@ -210,14 +219,35 @@
                 <div class="text-sm font-medium text-vintage-charcoal">
                   ${{ sale.totalAmount ? formatCurrency(sale.totalAmount) : '0.00' }}
                 </div>
+                <!-- Show installment information if available -->
+                <div v-if="isInstallmentSale(sale.saleId)" class="text-xs text-blue-600">
+                  <div class="flex items-center gap-1">
+                    <span class="font-medium">Installment:</span>
+                    <span>${{ formatCurrency(getAmountPaidForSale(sale.saleId)) }} paid</span>
+                    <span class="text-vintage-gray">/</span>
+                    <span class="text-vintage-gray">${{ formatCurrency(getRemainingAmountForSale(sale.saleId)) }} remaining</span>
+                  </div>
+                  <!-- Show payment breakdown -->
+                  <div class="text-xs text-vintage-gray mt-1">
+                    <span>Down: ${{ formatCurrency(getInstallmentPlanForSale(sale.saleId)?.downPayment || 0) }}</span>
+                    <span class="mx-1">+</span>
+                    <span>Payments: ${{ formatCurrency(getAmountPaidForSale(sale.saleId) - (getInstallmentPlanForSale(sale.saleId)?.downPayment || 0)) }}</span>
+                  </div>
+                </div>
                 <div v-if="sale.items && Array.isArray(sale.items)" class="text-xs text-vintage-gray">
                   {{ sale.items.length }} item(s)
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getStatusBadgeClass(sale.status || 'Pending')">
-                  {{ sale.status || 'Pending' }}
-                </span>
+                <div class="flex flex-col gap-1">
+                  <span :class="getStatusBadgeClass(sale.status || 'Pending')">
+                    {{ sale.status || 'Pending' }}
+                  </span>
+                  <!-- Show installment indicator -->
+                  <span v-if="isInstallmentSale(sale.saleId)" class="text-xs text-blue-600 font-medium">
+                    📋 Installment Plan
+                  </span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-vintage-gray">
                 {{ sale.paymentMethod || 'N/A' }}
@@ -391,10 +421,25 @@ const loadSales = async () => {
     isLoading.value = true
     error.value = null
     
-    await salesStore.fetchSales({
-      limit: 100, // Load more sales for better filtering
-      offset: 0
-    })
+    // Load sales and installment information in parallel
+    await Promise.all([
+      salesStore.fetchSales({
+        limit: 100, // Load more sales for better filtering
+        offset: 0
+      }),
+      salesStore.fetchInstallmentPlans(),
+      salesStore.fetchPayments()
+    ])
+    
+    // Debug: Log what was loaded
+    console.log('Sales loaded:', salesStore.sales.length)
+    console.log('Installment plans loaded:', salesStore.installmentPlans.length)
+    console.log('Payments loaded:', salesStore.payments.length)
+    
+    // Log first few installment plans to verify data
+    if (salesStore.installmentPlans.length > 0) {
+      console.log('First installment plan:', salesStore.installmentPlans[0])
+    }
     
     // Load sales statistics
     await loadSalesStats()
@@ -509,6 +554,55 @@ const getStatusBadgeClass = (status: string) => {
     default:
       return `${baseClasses} bg-gray-100 text-gray-800`
   }
+}
+
+// Helper functions for installment calculations
+const getInstallmentPlanForSale = (saleId: string) => {
+  return salesStore.installmentPlans.find(plan => plan.saleId === saleId)
+}
+
+const getAmountPaidForSale = (saleId: string) => {
+  const plan = getInstallmentPlanForSale(saleId)
+  if (!plan) return 0
+  
+  // Include the down payment that was made when the sale was created
+  let totalPaid = plan.downPayment || 0
+  
+  // Add any additional installment payments
+  const planPayments = salesStore.payments.filter(payment => payment.planId === plan.planId)
+  totalPaid += planPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0)
+  
+  // Debug logging
+  console.log(`Amount paid calculation for sale ${saleId}:`, {
+    planId: plan.planId,
+    downPayment: plan.downPayment,
+    additionalPayments: planPayments.length,
+    totalPaid,
+    planTotal: plan.totalAmount
+  })
+  
+  return totalPaid
+}
+
+const getRemainingAmountForSale = (saleId: string) => {
+  const plan = getInstallmentPlanForSale(saleId)
+  if (!plan) return 0
+  
+  const amountPaid = getAmountPaidForSale(saleId)
+  return plan.totalAmount - amountPaid
+}
+
+const isInstallmentSale = (saleId: string) => {
+  return !!getInstallmentPlanForSale(saleId)
+}
+
+const getTotalOutstandingAmount = () => {
+  let total = 0
+  salesStore.installmentPlans.forEach(plan => {
+    const amountPaid = getAmountPaidForSale(plan.saleId)
+    total += (plan.totalAmount - amountPaid)
+  })
+  return total
 }
 
 // Watchers
