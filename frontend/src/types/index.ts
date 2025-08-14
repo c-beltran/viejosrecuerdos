@@ -124,12 +124,14 @@ export interface ClientFilters {
 export interface Sale extends BaseEntity {
   saleId: string;
   clientId?: string;
+  client?: Client; // Include client details
   saleDate: string;
   totalAmount: number;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
   notes?: string;
   createdBy: string;
+  items?: SaleItem[]; // Include sale items
 }
 
 export type PaymentMethod = 'Cash' | 'Credit Card' | 'Debit Card' | 'Bank Transfer' | 'Check';
@@ -139,6 +141,7 @@ export interface SaleItem {
   saleItemId: string;
   saleId: string;
   itemId: string;
+  inventoryItem?: InventoryItem; // Include inventory item details
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -158,7 +161,17 @@ export interface CreateSaleRequest {
 export interface CreateSaleItemRequest {
   itemId: string;
   quantity: number;
-  unitPrice: number;
+  unitPrice?: number; // Optional, will use inventory price if not provided
+}
+
+export interface SaleFilters {
+  clientId?: string;
+  status?: SaleStatus;
+  paymentMethod?: PaymentMethod;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
 }
 
 // Installment types
@@ -202,6 +215,12 @@ export interface ApiResponse<T = any> {
   error?: string;
   count?: number;
   message?: string;
+}
+
+// Sale creation response type
+export interface SaleCreationResponse {
+  sale: Sale;
+  items: SaleItem[];
 }
 
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {

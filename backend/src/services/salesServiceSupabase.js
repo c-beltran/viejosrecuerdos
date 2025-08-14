@@ -54,7 +54,7 @@ const createSale = async (saleData, userId) => {
       clientId: clientId || null,
       totalAmount,
       paymentMethod: paymentMethod || 'Cash',
-      status: 'Completed',
+      status: saleData.status || 'Pending', // Use status from request or default to 'Pending'
       notes: notes || null,
       createdBy: userId,
       createdAt: new Date().toISOString(),

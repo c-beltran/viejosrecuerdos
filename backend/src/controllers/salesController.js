@@ -223,7 +223,6 @@ const getSaleById = async (req, res) => {
  *                       $ref: '#/components/schemas/Sale'
  *                     items:
  *                       type: array
- *                       items:
  *                         $ref: '#/components/schemas/SaleItem'
  *       400:
  *         description: Bad request - validation error

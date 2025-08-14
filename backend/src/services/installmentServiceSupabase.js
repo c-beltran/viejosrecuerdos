@@ -1,4 +1,4 @@
-const { supabase } = require('../utils/supabaseClient');
+const supabase = require('../utils/supabaseClient');
 
 class InstallmentServiceSupabase {
   // Create a new installment plan

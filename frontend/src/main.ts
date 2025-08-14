@@ -24,6 +24,7 @@ import ClientDetailView from './views/ClientDetailView.vue'
 import ClientFormView from './views/ClientFormView.vue'
 import SalesView from './views/SalesView.vue'
 import SalesFormView from './views/SalesFormView.vue'
+import SalesDetailView from './views/SalesDetailView.vue'
 import InstallmentsView from './views/InstallmentsView.vue'
 import SettingsView from './views/SettingsView.vue'
 import NotFoundView from './views/NotFoundView.vue'
@@ -106,6 +107,24 @@ const router = createRouter({
       path: '/sales/new',
       name: 'sales-new',
       component: SalesFormView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/sales/:id',
+      name: 'sale-detail',
+      component: SalesDetailView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/sales/:id/edit',
+      name: 'sale-edit',
+      component: SalesFormView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/sales/:id/installments',
+      name: 'sale-installments',
+      component: InstallmentsView,
       meta: { requiresAuth: true }
     },
     {

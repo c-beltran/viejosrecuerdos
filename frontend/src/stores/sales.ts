@@ -10,7 +10,8 @@ import {
   CreateInstallmentPlanRequest,
   CreatePaymentRequest,
   LoadingState,
-  PaginationState
+  PaginationState,
+  SaleCreationResponse
 } from '@/types'
 import ApiService from '@/utils/api'
 
@@ -22,6 +23,11 @@ export const useSalesStore = defineStore('sales', () => {
   const installmentPlans = ref<InstallmentPlan[]>([])
   const currentInstallmentPlan = ref<InstallmentPlan | null>(null)
   const payments = ref<InstallmentPayment[]>([])
+  
+  // Ensure sales array is always initialized
+  if (!Array.isArray(sales.value)) {
+    sales.value = []
+  }
   
   const loading = ref<LoadingState>({
     isLoading: false,
@@ -51,6 +57,15 @@ export const useSalesStore = defineStore('sales', () => {
   const hasSales = computed(() => sales.value.length > 0)
   const totalSales = computed(() => pagination.value.total)
   const hasInstallmentPlans = computed(() => installmentPlans.value.length > 0)
+  
+  // Safe getter for sales that ensures array type
+  const getSales = computed(() => {
+    if (!Array.isArray(sales.value)) {
+      console.warn('Sales array is not an array, resetting to empty array')
+      sales.value = []
+    }
+    return sales.value.filter(sale => sale && sale.saleId)
+  })
 
   // Actions
   const setLoading = (isLoading: boolean, error: string | null = null) => {
@@ -100,7 +115,7 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
-      const response = await ApiService.get<Sale>(`/sales/${saleId}`)
+      const response = await ApiService.get<Sale>(`/sales/item/${saleId}`)
       
       if (response.success && response.data) {
         currentSale.value = response.data
@@ -121,12 +136,50 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
-      const response = await ApiService.post<Sale>('/sales', saleData)
+      const response = await ApiService.post<SaleCreationResponse>('/sales', saleData)
+      
+      console.log('Raw API response:', response)
       
       if (response.success && response.data) {
-        sales.value.unshift(response.data)
+        // Handle different response structures
+        let saleData = response.data
+        
+        // Check if the response has a nested 'sale' property
+        if (response.data.sale && response.data.sale.saleId) {
+          saleData = response.data.sale
+          console.log('Using nested sale data:', saleData)
+        }
+        
+        // Validate the sale data
+        if (!saleData.saleId) {
+          console.error('Invalid sale response: missing saleId', response.data)
+          throw new Error('Invalid sale response from server')
+        }
+        
+        // Ensure the sale object has all required properties
+        const validatedSale: Sale = {
+          saleId: saleData.saleId,
+          clientId: saleData.clientId,
+          client: saleData.client,
+          saleDate: saleData.saleDate || new Date().toISOString(),
+          totalAmount: saleData.totalAmount || 0,
+          paymentMethod: saleData.paymentMethod || 'Cash',
+          status: saleData.status || 'Pending',
+          notes: saleData.notes,
+          createdBy: saleData.createdBy || 'system',
+          items: saleData.items || response.data.items || [],
+          createdAt: saleData.createdAt || new Date().toISOString(),
+          updatedAt: saleData.updatedAt || new Date().toISOString()
+        }
+        
+        console.log('Final validated sale object:', validatedSale)
+        console.log('Sale items:', validatedSale.items)
+        
+        console.log('Validated sale:', validatedSale)
+        
+        sales.value.unshift(validatedSale)
         pagination.value.total += 1
-        return response.data
+        return validatedSale
       } else {
         throw new Error(response.error || 'Failed to create sale')
       }
@@ -143,21 +196,26 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
-      const response = await ApiService.put<Sale>(`/sales/${saleId}`, updateData)
-      
-      if (response.success && response.data) {
-        const index = sales.value.findIndex(sale => sale.saleId === saleId)
-        if (index !== -1) {
-          sales.value[index] = response.data
-        }
+      // For now, we only support status updates via the backend API
+      if (updateData.status) {
+        const response = await ApiService.put<Sale>(`/sales/item/${saleId}/status`, { status: updateData.status })
         
-        if (currentSale.value?.saleId === saleId) {
-          currentSale.value = response.data
+        if (response.success && response.data) {
+          const index = sales.value.findIndex(sale => sale.saleId === saleId)
+          if (index !== -1) {
+            sales.value[index] = response.data
+          }
+          
+          if (currentSale.value?.saleId === saleId) {
+            currentSale.value = response.data
+          }
+          
+          return response.data
+        } else {
+          throw new Error(response.error || 'Failed to update sale status')
         }
-        
-        return response.data
       } else {
-        throw new Error(response.error || 'Failed to update sale')
+        throw new Error('Only status updates are currently supported')
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update sale'
@@ -427,6 +485,7 @@ export const useSalesStore = defineStore('sales', () => {
     hasSales,
     totalSales,
     hasInstallmentPlans,
+    getSales,
     
     // Actions
     setLoading,
