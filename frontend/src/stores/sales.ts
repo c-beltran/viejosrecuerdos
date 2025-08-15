@@ -196,29 +196,33 @@ export const useSalesStore = defineStore('sales', () => {
     try {
       setLoading(true)
       
-      // For now, we only support status updates via the backend API
-      if (updateData.status) {
-        const response = await ApiService.put<Sale>(`/sales/item/${saleId}/status`, { status: updateData.status })
-        
-        if (response.success && response.data) {
-          const index = sales.value.findIndex(sale => sale.saleId === saleId)
-          if (index !== -1) {
-            sales.value[index] = response.data
-          }
-          
-          if (currentSale.value?.saleId === saleId) {
-            currentSale.value = response.data
-          }
-          
-          return response.data
-        } else {
-          throw new Error(response.error || 'Failed to update sale status')
+      console.log('=== Frontend updateSale called ===')
+      console.log('Sale ID:', saleId)
+      console.log('Update data:', updateData)
+      
+      // Use the new general update endpoint
+      const response = await ApiService.put<Sale>(`/sales/${saleId}`, updateData)
+      
+      if (response.success && response.data) {
+        // Update the sale in the local store
+        const index = sales.value.findIndex(sale => sale.saleId === saleId)
+        if (index !== -1) {
+          sales.value[index] = response.data
         }
+        
+        // Update current sale if it's the one being edited
+        if (currentSale.value?.saleId === saleId) {
+          currentSale.value = response.data
+        }
+        
+        console.log('Sale updated successfully in store:', response.data)
+        return response.data
       } else {
-        throw new Error('Only status updates are currently supported')
+        throw new Error(response.error || 'Failed to update sale')
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update sale'
+      console.error('Error updating sale:', err)
       setLoading(false, errorMessage)
       throw err
     } finally {

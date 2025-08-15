@@ -5,6 +5,7 @@ const {
   getAllSales,
   getSaleById,
   createSale,
+  updateSale,
   updateSaleStatus,
   getSalesStats,
   getSalesByClient
@@ -18,6 +19,7 @@ router.get('/sales', getAllSales);
 router.get('/sales/stats', getSalesStats);
 router.get('/sales/item/:saleId', getSaleById);
 router.post('/sales', createSale);
+router.put('/sales/:saleId', updateSale); // Update sale details
 router.put('/sales/item/:saleId/status', updateSaleStatus);
 router.get('/sales/client/:clientId', getSalesByClient);
 

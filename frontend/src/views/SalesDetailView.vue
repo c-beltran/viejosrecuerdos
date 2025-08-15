@@ -86,9 +86,18 @@
                             <p class="text-2xl font-bold text-vintage-charcoal">${{ sale.totalAmount ? formatCurrency(sale.totalAmount) : '0.00' }}</p>
           </div>
           
-          <div>
+                    <div>
             <label class="block text-sm font-medium text-vintage-gray mb-1">Created By</label>
-                            <p class="text-vintage-charcoal">{{ sale.createdBy || 'N/A' }}</p>
+            <p class="text-vintage-charcoal">{{ sale.createdBy || 'N/A' }}</p>
+          </div>
+          
+          <!-- Installment Plan Indicator -->
+          <div v-if="isInstallmentSale" class="md:col-span-2 lg:col-span-3">
+            <div class="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <CreditCard class="w-5 h-5 text-blue-600" />
+              <span class="text-blue-800 font-medium">📋 Installment Plan</span>
+              <span class="text-blue-600 text-sm">This sale is being paid in installments</span>
+            </div>
           </div>
         </div>
 
@@ -207,6 +216,62 @@
               <span>${{ formatCurrency(sale.totalAmount) }}</span>
             </div>
           </div>
+          
+          <!-- Installment Details -->
+          <div v-if="isInstallmentSale" class="border-t border-vintage-beige pt-3">
+            <h3 class="text-lg font-medium text-vintage-charcoal mb-3">Installment Plan Details</h3>
+            
+            <div v-if="installmentPlan" class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-vintage-gray">Down Payment:</span>
+                <span class="font-medium text-vintage-charcoal">${{ formatCurrency(installmentPlan.downPayment || 0) }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-vintage-gray">Installments:</span>
+                <span class="font-medium text-vintage-charcoal">{{ installmentPlan.numberOfInstallments }} × ${{ formatCurrency(installmentPlan.installmentAmount || 0) }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-vintage-gray">Amount Paid:</span>
+                <span class="font-medium text-vintage-charcoal">${{ formatCurrency(amountPaid) }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-vintage-gray">Remaining Balance:</span>
+                <span class="font-medium text-vintage-charcoal">${{ formatCurrency(remainingBalance) }}</span>
+              </div>
+              
+              <div class="flex justify-between">
+                <span class="text-vintage-gray">Status:</span>
+                <span :class="getInstallmentStatusBadgeClass(getEffectiveStatus(installmentPlan))">
+                  {{ getEffectiveStatus(installmentPlan) }}
+                </span>
+              </div>
+              
+              <!-- View Installment Details Button -->
+              <div class="pt-2">
+                <button
+                  @click="openInstallments"
+                  class="btn-primary w-full"
+                >
+                  <CreditCard class="w-4 h-4 mr-2" />
+                  View Installment Details
+                </button>
+              </div>
+            </div>
+            
+            <div v-else class="text-center py-4">
+              <p class="text-vintage-gray mb-3">Installment plan details not available</p>
+              <button
+                @click="openInstallments"
+                class="btn-primary"
+              >
+                <CreditCard class="w-4 h-4 mr-2" />
+                View Installment Details
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -257,6 +322,59 @@ const subtotal = computed(() => {
   return sale.value.items.reduce((sum, item) => sum + ((item?.quantity || 0) * (item?.unitPrice || 0)), 0)
 })
 
+// Installment-related computed properties
+const isInstallmentSale = computed(() => {
+  return !!installmentPlan.value
+})
+
+const installmentPlan = computed(() => {
+  if (!sale.value?.saleId) return null
+  return salesStore.installmentPlans.find(plan => plan.saleId === sale.value.saleId)
+})
+
+const amountPaid = computed(() => {
+  if (!installmentPlan.value) return 0
+  return getAmountPaidForPlan(installmentPlan.value.planId)
+})
+
+const remainingBalance = computed(() => {
+  if (!installmentPlan.value) return 0
+  return (installmentPlan.value.totalAmount || 0) - amountPaid.value
+})
+
+// Check if an installment plan is completed (fully paid)
+const isPlanCompleted = (plan: any) => {
+  if (!plan) return false
+  const totalPaid = getAmountPaidForPlan(plan.planId)
+  const totalAmount = plan.totalAmount || 0
+  return totalPaid >= totalAmount
+}
+
+// Get the effective status for display (auto-update to Completed if fully paid)
+const getEffectiveStatus = (plan: any) => {
+  if (isPlanCompleted(plan)) {
+    return 'Completed'
+  }
+  return plan.status || 'Active'
+}
+
+// Helper function to get amount paid for a specific plan
+const getAmountPaidForPlan = (planId: string) => {
+  if (!planId) return 0
+  
+  // Find the plan
+  const plan = salesStore.installmentPlans.find(p => p.planId === planId)
+  if (!plan) return 0
+  
+  let totalPaid = plan.downPayment || 0
+  
+  // Add any additional installment payments
+  const planPayments = salesStore.payments.filter(payment => payment.planId === planId)
+  totalPaid += planPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0)
+  
+  return totalPaid
+}
+
 // Methods
 const loadSale = async () => {
   if (!saleId.value) return
@@ -265,19 +383,21 @@ const loadSale = async () => {
     isLoading.value = true
     error.value = null
     
-    // Load sale details
-    const saleData = await salesStore.fetchSale(saleId.value)
-    console.log('Fetched sale data:', saleData)
+    // Load inventory first to ensure item names are available
+    await inventoryStore.fetchAllAvailableItems()
+    
+    // Then load sale details and installment data in parallel
+    const [saleData] = await Promise.all([
+      salesStore.fetchSale(saleId.value),
+      salesStore.fetchInstallmentPlans(),
+      salesStore.fetchPayments()
+    ])
     
     if (saleData) {
       sale.value = saleData
-      console.log('Sale set to store:', sale.value)
     } else {
       error.value = 'Sale not found'
     }
-    
-    // Load inventory for item details
-    await inventoryStore.fetchAllAvailableItems()
     
   } catch (err) {
     console.error('Error loading sale:', err)
@@ -289,19 +409,49 @@ const loadSale = async () => {
 }
 
 const getItemName = (itemId: string) => {
-  if (!itemId || !inventoryStore.items || !Array.isArray(inventoryStore.items)) {
-    return 'Unknown Item'
+  if (!itemId) return 'Unknown Item'
+  
+  // First, try to get from sale items if they already contain inventory details
+  if (sale.value?.items) {
+    const saleItem = sale.value.items.find(si => si.itemId === itemId)
+    
+    if (saleItem?.inventoryItem) {
+      return `${saleItem.inventoryItem.friendlyId} - ${saleItem.inventoryItem.itemName}`
+    } else {
+    }
   }
-  const item = inventoryStore.items.find(item => item.itemId === itemId)
-  return item ? `${item.friendlyId} - ${item.itemName}` : 'Unknown Item'
+  
+  // If not found in sale items, try to find in inventory store
+  if (inventoryStore.items && Array.isArray(inventoryStore.items)) {
+    const item = inventoryStore.items.find(item => item.itemId === itemId)
+    if (item) {
+      return `${item.friendlyId} - ${item.itemName}`
+    }
+  }
+  
+  return `Item ${itemId.slice(0, 8)}...`
 }
 
 const getItemDescription = (itemId: string) => {
-  if (!itemId || !inventoryStore.items || !Array.isArray(inventoryStore.items)) {
-    return 'No description available'
+  if (!itemId) return 'No description available'
+  
+  // First, try to get from sale items if they already contain inventory details
+  if (sale.value?.items) {
+    const saleItem = sale.value.items.find(si => si.itemId === itemId)
+    if (saleItem?.inventoryItem?.descripcionArticulo) {
+      return saleItem.inventoryItem.descripcionArticulo
+    }
   }
-  const item = inventoryStore.items.find(item => item.itemId === itemId)
-  return item?.descripcionArticulo || 'No description available'
+  
+  // If not found in sale items, try to find in inventory store
+  if (inventoryStore.items && Array.isArray(inventoryStore.items)) {
+    const item = inventoryStore.items.find(item => item.itemId === itemId)
+    if (item?.descripcionArticulo) {
+      return item.descripcionArticulo
+    }
+  }
+  
+  return 'No description available'
 }
 
 const getStatusBadgeClass = (status: string) => {
@@ -318,6 +468,23 @@ const getStatusBadgeClass = (status: string) => {
       return `${baseClasses} bg-gray-100 text-gray-800`
     default:
       return `${baseClasses} bg-gray-100 text-gray-800`
+  }
+}
+
+const getInstallmentStatusBadgeClass = (status: string) => {
+  const baseClasses = 'px-2 py-1 text-xs font-medium rounded-full'
+  
+  switch (status) {
+    case 'Active':
+      return `${baseClasses} bg-blue-100 text-blue-800`
+    case 'Completed':
+      return `${baseClasses} bg-green-100 text-green-800`
+    case 'Defaulted':
+      return `${baseClasses} bg-red-100 text-red-800`
+    case 'Cancelled':
+      return `${baseClasses} bg-gray-100 text-gray-800`
+    default:
+      return `${baseClasses} bg-blue-100 text-blue-800`
   }
 }
 

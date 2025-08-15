@@ -97,7 +97,7 @@
           <select 
             v-model="filters.category" 
             @change="applyFilters"
-            class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+            class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
           >
             <option value="">All Categories</option>
             <option v-for="category in categories" :key="category" :value="category">
@@ -110,7 +110,7 @@
           <select 
             v-model="filters.status" 
             @change="applyFilters"
-            class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+            class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
           >
             <option value="">All Status</option>
             <option value="Available">Available</option>
@@ -124,14 +124,14 @@
               v-model="filters.minPrice"
               type="number"
               placeholder="Min"
-              class="flex-1 px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+              class="flex-1 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
               @input="applyFilters"
             />
             <input
               v-model="filters.maxPrice"
               type="number"
               placeholder="Max"
-              class="flex-1 px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+              class="flex-1 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
               @input="applyFilters"
             />
           </div>

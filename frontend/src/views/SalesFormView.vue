@@ -34,7 +34,7 @@
             <!-- Client Selection -->
             <div>
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
-                Client (Optional)
+                Client <span class="text-red-500">*</span>
               </label>
               <div class="relative">
                 <input
@@ -80,7 +80,7 @@
             <!-- Payment Method -->
             <div>
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
-                Payment Method
+                Payment Method <span class="text-red-500">*</span>
               </label>
               <select
                 v-model="form.paymentMethod"
@@ -97,7 +97,7 @@
             <!-- Sale Date -->
             <div class="relative">
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
-                Sale Date
+                Sale Date <span class="text-red-500">*</span>
               </label>
               <div class="relative date-input-container">
                 <input
@@ -159,13 +159,15 @@
                     :key="date.key"
                     @click="selectDate(date)"
                     :class="[
-                      'text-center py-2 px-1 cursor-pointer rounded transition-colors text-sm',
+                      'text-center py-2 px-1 rounded transition-colors text-sm',
                       date.isCurrentMonth 
-                        ? date.isToday 
-                          ? 'bg-antique-gold text-white font-semibold' 
-                          : date.isSelected 
-                            ? 'bg-antique-gold text-white font-semibold'
-                            : 'hover:bg-vintage-ivory text-vintage-charcoal'
+                        ? date.isFuture
+                          ? 'text-vintage-gray cursor-not-allowed opacity-50' // Future dates are disabled
+                          : date.isToday 
+                            ? 'bg-antique-gold text-white font-semibold cursor-pointer' 
+                            : date.isSelected 
+                              ? 'bg-antique-gold text-white font-semibold cursor-pointer'
+                              : 'hover:bg-vintage-ivory text-vintage-charcoal cursor-pointer'
                         : 'text-vintage-gray cursor-default'
                     ]"
                   >
@@ -222,7 +224,7 @@
 
         <!-- Add Items Section -->
         <div class="card-antique p-6">
-          <h2 class="text-xl font-semibold text-vintage-charcoal mb-4">Add Items</h2>
+                      <h2 class="text-xl font-semibold text-vintage-charcoal mb-4">Add Items <span class="text-red-500">*</span></h2>
           
           <!-- Loading State for Inventory -->
           <div v-if="isLoading" class="mb-4 p-4 bg-vintage-ivory rounded-lg text-center">
@@ -232,16 +234,10 @@
           
           <!-- Item Lookup by Friendly ID -->
           <div class="mb-4">
-            <div class="flex items-center justify-between mb-2">
+            <div class="mb-2">
               <label class="block text-sm font-medium text-vintage-charcoal">
                 Lookup Item by Friendly ID
               </label>
-              <button
-                @click="debugInventory"
-                class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700"
-              >
-                Debug Inventory
-              </button>
             </div>
             <div class="flex gap-2">
               <div class="flex-1 relative">
@@ -300,55 +296,7 @@
             </div>
           </div>
 
-          <!-- Manual Item Addition -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-vintage-charcoal mb-2">
-              Or Add Item Manually
-            </label>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
-              <select
-                v-model="newItem.itemId"
-                :disabled="isLoading"
-                class="px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="">Select Item</option>
-                <option
-                  v-for="item in availableInventory"
-                  :key="item.itemId"
-                  :value="item.itemId"
-                >
-                  {{ item.friendlyId }} - {{ item.itemName }}
-                </option>
-              </select>
-              
-              <input
-                v-model.number="newItem.quantity"
-                type="number"
-                min="1"
-                placeholder="Qty"
-                :disabled="isLoading"
-                class="px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              
-              <input
-                v-model.number="newItem.unitPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Unit Price"
-                :disabled="isLoading"
-                class="px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              
-              <button
-                @click="addItem"
-                :disabled="isLoading || !newItem.itemId || !newItem.quantity"
-                class="btn-primary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add Item
-              </button>
-            </div>
-          </div>
+
 
           <!-- Current Items List -->
           <div v-if="form.items.length > 0">
@@ -498,6 +446,29 @@
           </div>
         </div>
 
+        <!-- Validation Messages -->
+        <div v-if="hasValidationErrors" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">
+                Please fix the following issues:
+              </h3>
+              <div class="mt-2 text-sm text-red-700">
+                <ul class="list-disc pl-5 space-y-1">
+                  <li v-for="message in validationMessages" :key="message">
+                    {{ message }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Action Buttons -->
         <div class="space-y-3">
           <button
@@ -602,6 +573,17 @@ const validateAndFormatDate = () => {
     
     // Validate date ranges
     if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+      // Check if date is in the future
+      const selectedDate = new Date(year, month - 1, day, 12, 0, 0, 0) // Set to noon for consistency
+      const today = new Date()
+      today.setHours(12, 0, 0, 0) // Set to noon for consistent comparison
+      
+      if (selectedDate > today) {
+        toast.error('Cannot select future dates. Please select today or a past date.')
+        form.value.saleDate = getTodayDate()
+        return
+      }
+      
       // Format with leading zeros
       form.value.saleDate = `${String(day).padStart(2, '0')}-${String(month).padStart(2, '0')}-${year}`
       return
@@ -612,6 +594,16 @@ const validateAndFormatDate = () => {
   try {
     const date = new Date(dateValue)
     if (!isNaN(date.getTime())) {
+          // Check if date is in the future
+    const today = new Date()
+    today.setHours(12, 0, 0, 0) // Set to noon for consistent comparison
+    
+    if (date > today) {
+      toast.error('Cannot select future dates. Please select today or a past date.')
+      form.value.saleDate = getTodayDate()
+      return
+    }
+      
       form.value.saleDate = formatDateForInput(dateValue)
     } else {
       // Invalid date, reset to today
@@ -626,35 +618,59 @@ const validateAndFormatDate = () => {
 }
 
 const convertDateForBackend = (dateString: string) => {
+  console.log('=== convertDateForBackend Debug ===')
+  console.log('Input dateString:', dateString)
+  console.log('Input dateString length:', dateString.length)
+  console.log('Input dateString type:', typeof dateString)
+  
   // Convert DD-MM-YYYY to YYYY-MM-DD for backend
   const dateRegex = /^(\d{1,2})-(\d{1,2})-(\d{4})$/
+  console.log('Testing regex against:', dateString)
+  console.log('Regex test result:', dateRegex.test(dateString))
+  
   const match = dateString.match(dateRegex)
+  console.log('Regex match result:', match)
   
   if (match) {
-    const day = match[1]
-    const month = match[2]
-    const year = match[3]
-    return `${year}-${month}-${day}` // Returns YYYY-MM-DD format
+    const day = parseInt(match[1])
+    const month = parseInt(match[2])
+    const year = parseInt(match[3])
+    
+    console.log('Parsed values:', { day, month, year })
+    
+    // Create a date object at noon local time to avoid timezone issues
+    const localDate = new Date(year, month - 1, day, 12, 0, 0, 0)
+    const result = localDate.toISOString() // Send full ISO timestamp
+    console.log('Regex match successful:', { day, month, year, localDate, result })
+    return result
   }
+  
+  console.log('Regex match failed, trying fallback parsing')
   
   // Fallback: try to parse and convert
   try {
     const date = new Date(dateString)
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0] // Returns YYYY-MM-DD format
+      // Set time to noon to avoid timezone issues
+      date.setHours(12, 0, 0, 0)
+      const result = date.toISOString() // Returns full ISO timestamp
+      console.log('Fallback parsing successful:', { date, result })
+      return result
     }
   } catch (err) {
     console.error('Error converting date for backend:', err)
   }
   
-  // If all else fails, return today's date in backend format
-  const today = new Date()
-  return today.toISOString().split('T')[0]
+  // If all else fails, return the original date string or throw an error
+  console.log('All conversion methods failed, throwing error')
+  throw new Error('Invalid date format. Please use DD-MM-YYYY format.')
 }
 
 // Calendar helper functions
 const isToday = (date: Date) => {
   const today = new Date()
+  // Set today to noon for consistent comparison
+  today.setHours(12, 0, 0, 0)
   return date.getDate() === today.getDate() && 
          date.getMonth() === today.getMonth() && 
          date.getFullYear() === today.getFullYear()
@@ -662,9 +678,18 @@ const isToday = (date: Date) => {
 
 const isSelectedDate = (date: Date) => {
   if (!selectedDate.value) return false
-  return date.getDate() === selectedDate.value.getDate() && 
-         date.getMonth() === selectedDate.value.getMonth() && 
-         date.getFullYear() === selectedDate.value.getFullYear()
+  // Set selected date to noon for consistent comparison
+  const selected = new Date(selectedDate.value)
+  selected.setHours(12, 0, 0, 0)
+  return date.getDate() === selected.getDate() && 
+         date.getMonth() === selected.getMonth() && 
+         date.getFullYear() === selected.getFullYear()
+}
+
+const isFutureDate = (date: Date) => {
+  const today = new Date()
+  today.setHours(12, 0, 0, 0) // Set to noon for consistent comparison
+  return date > today
 }
 
 const previousMonth = () => {
@@ -678,8 +703,22 @@ const nextMonth = () => {
 const selectDate = (dateObj: any) => {
   if (!dateObj.isCurrentMonth) return
   
+  // Check if the selected date is in the future
+  if (dateObj.isFuture) {
+    toast.error('Cannot select future dates. Please select today or a past date.')
+    return
+  }
+  
+  console.log('=== Date Selection Debug ===')
+  console.log('Original date object:', dateObj.date)
+  console.log('Date as ISO string:', dateObj.date.toISOString())
+  console.log('Date as local string:', dateObj.date.toString())
+  console.log('Date getTime():', dateObj.date.getTime())
+  
   selectedDate.value = dateObj.date
-  form.value.saleDate = formatDateForInput(dateObj.date.toISOString())
+  const formattedDate = formatDateForInput(dateObj.date.toISOString())
+  console.log('Formatted date for form:', formattedDate)
+  form.value.saleDate = formattedDate
   
   nextTick(() => {
     showCalendar.value = false
@@ -718,11 +757,6 @@ const selectedClient = ref<Client | null>(null)
 const itemLookup = ref('')
 const lookupResults = ref<InventoryItem[]>([])
 const isLookingUp = ref(false)
-const newItem = ref<CreateSaleItemRequest>({
-  itemId: '',
-  quantity: 1,
-  unitPrice: 0
-})
 
 // Payment options
 const paymentOption = ref<'full' | 'installment'>('full')
@@ -738,12 +772,6 @@ const currentDate = ref(new Date())
 const selectedDate = ref<Date | null>(null)
 
 // Computed properties
-const availableInventory = computed(() => {
-  if (isLoading.value || !inventoryStore.items || !Array.isArray(inventoryStore.items)) {
-    return []
-  }
-  return inventoryStore.items.filter(item => item.currentQuantity > 0)
-})
 
 const totalItems = computed(() => {
   if (!form.value.items || !Array.isArray(form.value.items)) {
@@ -771,13 +799,80 @@ const installmentAmount = computed(() => {
 })
 
 const canSave = computed(() => {
+  // Check if items exist and are valid
   if (!form.value.items || !Array.isArray(form.value.items) || form.value.items.length === 0) {
     return false
   }
-  return form.value.items.every(item => 
+  
+  // Check if all items have required fields
+  const itemsValid = form.value.items.every(item => 
     item && item.itemId && item.quantity > 0 && item.unitPrice > 0
   )
+  
+  if (!itemsValid) {
+    return false
+  }
+  
+  // Check if client is selected
+  if (!form.value.clientId) {
+    return false
+  }
+  
+  // Check if payment method is selected
+  if (!form.value.paymentMethod) {
+    return false
+  }
+  
+  // Check if sale date is set
+  if (!form.value.saleDate) {
+    return false
+  }
+  
+  return true
 })
+
+// Validation messages for user feedback
+const validationMessages = computed(() => {
+  const messages = []
+  
+  // Check items
+  if (!form.value.items || !Array.isArray(form.value.items) || form.value.items.length === 0) {
+    messages.push('Add at least one item to the sale')
+  } else {
+    // Check individual items
+    form.value.items.forEach((item, index) => {
+      if (!item || !item.itemId) {
+        messages.push(`Item ${index + 1}: Select a valid item`)
+      }
+      if (!item || item.quantity <= 0) {
+        messages.push(`Item ${index + 1}: Quantity must be greater than 0`)
+      }
+      if (!item || item.unitPrice <= 0) {
+        messages.push(`Item ${index + 1}: Unit price must be greater than 0`)
+      }
+    })
+  }
+  
+  // Check client
+  if (!form.value.clientId) {
+    messages.push('Select a client for the sale')
+  }
+  
+  // Check payment method
+  if (!form.value.paymentMethod) {
+    messages.push('Select a payment method')
+  }
+  
+  // Check sale date
+  if (!form.value.saleDate) {
+    messages.push('Select a sale date')
+  }
+  
+  return messages
+})
+
+// Check if form has validation errors
+const hasValidationErrors = computed(() => validationMessages.value.length > 0)
 
 // Calendar computed properties
 const currentMonthName = computed(() => {
@@ -806,41 +901,47 @@ const calendarDates = computed(() => {
   
   // Add dates from previous month to fill first week
   for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-    const date = new Date(year, month - 1, lastDateOfPrevMonth.getDate() - i)
+    // Create date at noon to avoid timezone issues
+    const date = new Date(year, month - 1, lastDateOfPrevMonth.getDate() - i, 12, 0, 0, 0)
     dates.push({
       key: `prev-${date.getTime()}`,
       date,
       day: date.getDate(),
       isCurrentMonth: false,
       isToday: isToday(date),
-      isSelected: isSelectedDate(date)
+      isSelected: isSelectedDate(date),
+      isFuture: isFutureDate(date)
     })
   }
   
   // Add dates from current month
   for (let day = 1; day <= lastDay.getDate(); day++) {
-    const date = new Date(year, month, day)
+    // Create date at noon to avoid timezone issues
+    const date = new Date(year, month, day, 12, 0, 0, 0)
     dates.push({
       key: `current-${date.getTime()}`,
       date,
       day,
       isCurrentMonth: true,
       isToday: isToday(date),
-      isSelected: isSelectedDate(date)
+      isSelected: isSelectedDate(date),
+      isFuture: isFutureDate(date)
     })
   }
   
   // Add dates from next month to fill last week
   const remainingDays = 42 - dates.length // 6 rows * 7 days = 42
   for (let day = 1; day <= remainingDays; day++) {
-    const date = new Date(year, month + 1, day)
+    // Create date at noon to avoid timezone issues
+    const date = new Date(year, month + 1, day, 12, 0, 0, 0)
     dates.push({
       key: `next-${date.getTime()}`,
       date,
       day,
       isCurrentMonth: false,
       isToday: isToday(date),
-      isSelected: isSelectedDate(date)
+      isSelected: isSelectedDate(date),
+      isFuture: isFutureDate(date)
     })
   }
   
@@ -970,12 +1071,24 @@ const lookupItem = async () => {
 }
 
 const selectItemForLookup = (item: InventoryItem) => {
-  newItem.value = {
-    itemId: item.itemId,
-    quantity: 1,
-    unitPrice: item.unitPrice
+  // Check if item is already in the sale
+  const existingItemIndex = form.value.items.findIndex(saleItem => saleItem.itemId === item.itemId)
+  
+  if (existingItemIndex !== -1) {
+    // Item already exists, increase quantity
+    form.value.items[existingItemIndex].quantity += 1
+    toast.success(`Increased quantity of ${item.friendlyId} to ${form.value.items[existingItemIndex].quantity}`)
+  } else {
+    // Add new item to sale
+    form.value.items.push({
+      itemId: item.itemId,
+      quantity: 1,
+      unitPrice: item.unitPrice
+    })
+    toast.success(`${item.friendlyId} - ${item.itemName} added to sale`)
   }
-  addItem()
+  
+  // Clear lookup
   itemLookup.value = ''
   lookupResults.value = []
 }
@@ -995,46 +1108,7 @@ const addItemByLookup = () => {
   }
 }
 
-const addItem = () => {
-  if (!newItem.value.itemId || !newItem.value.quantity) {
-    toast.error('Please fill in all item fields')
-    return
-  }
-  
-  if (!inventoryStore.items || !Array.isArray(inventoryStore.items)) {
-    toast.error('Inventory not loaded. Please try again.')
-    return
-  }
-  
-  const inventoryItem = inventoryStore.items.find(item => item.itemId === newItem.value.itemId)
-  if (!inventoryItem) {
-    toast.error('Item not found')
-    return
-  }
-  
-  if (newItem.value.quantity > inventoryItem.currentQuantity) {
-    toast.error(`Only ${inventoryItem.currentQuantity} items available`)
-    return
-  }
-  
-  // Use inventory price if unit price not specified
-  const unitPrice = newItem.value.unitPrice || inventoryItem.unitPrice
-  
-  form.value.items.push({
-    itemId: newItem.value.itemId,
-    quantity: newItem.value.quantity,
-    unitPrice
-  })
-  
-  // Reset form
-  newItem.value = {
-    itemId: '',
-    quantity: 1,
-    unitPrice: 0
-  }
-  
-  toast.success('Item added to sale')
-}
+
 
 const removeItem = (index: number) => {
   if (!form.value.items || !Array.isArray(form.value.items) || index < 0 || index >= form.value.items.length) {
@@ -1045,25 +1119,7 @@ const removeItem = (index: number) => {
   toast.success('Item removed from sale')
 }
 
-const debugInventory = () => {
-  console.log('Debug: Current inventory store state:')
-  console.log('- items:', inventoryStore.items)
-  console.log('- hasItems:', inventoryStore.hasItems)
-  console.log('- totalItems:', inventoryStore.totalItems)
-  console.log('- loading:', inventoryStore.loading)
-  
-  // Try to fetch items manually
-  console.log('Debug: Attempting to fetch all available items manually...')
-  console.log('Note: This will fetch ALL available items (not just 20) for complete search coverage')
-  inventoryStore.fetchAllAvailableItems().then(() => {
-    console.log('Debug: Manual fetch completed')
-    console.log('- items after fetch:', inventoryStore.items)
-    console.log('- hasItems after fetch:', inventoryStore.hasItems)
-    console.log('- Total available items loaded:', inventoryStore.items?.length || 0)
-  }).catch(err => {
-    console.error('Debug: Manual fetch failed:', err)
-  })
-}
+
 
 const getItemName = (itemId: string) => {
   if (!itemId) return 'Unknown Item'
@@ -1087,10 +1143,39 @@ const saveSale = async () => {
     form.value.totalAmount = totalAmount.value
     
     // Convert date format for backend (DD-MM-YYYY to YYYY-MM-DD)
+    console.log('=== About to convert date ===')
+    console.log('Form saleDate value:', form.value.saleDate)
+    console.log('Type of saleDate:', typeof form.value.saleDate)
+    
+    let convertedDate
+    try {
+      convertedDate = convertDateForBackend(form.value.saleDate)
+      console.log('Date conversion successful:', {
+        original: form.value.saleDate,
+        converted: convertedDate
+      })
+    } catch (err) {
+      console.error('Date conversion failed:', err)
+      console.error('Error details:', err.message)
+      toast.error('Invalid date format. Please use DD-MM-YYYY format.')
+      return
+    }
+    
+    // Ensure items have totalPrice calculated for both create and update
+    const itemsWithTotalPrice = form.value.items.map(item => ({
+      ...item,
+      totalPrice: (item.quantity || 0) * (item.unitPrice || 0)
+    }))
+    
     const saleData = {
       ...form.value,
-      saleDate: convertDateForBackend(form.value.saleDate)
+      saleDate: convertedDate,
+      items: itemsWithTotalPrice
     }
+    
+    console.log('=== Final Sale Data Being Sent ===')
+    console.log('Complete saleData:', saleData)
+    console.log('Sale date being sent to backend:', saleData.saleDate)
     
     // Set status to 'Pending' if using installment plan
     if (paymentOption.value === 'installment') {

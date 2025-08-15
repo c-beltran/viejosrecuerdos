@@ -5,6 +5,11 @@ const supabase = require('../utils/supabaseClient');
  */
 const createSale = async (saleData, userId) => {
   try {
+    console.log('=== Backend createSale called ===')
+    console.log('Received saleData:', saleData)
+    console.log('Sale date from request:', saleData.saleDate)
+    console.log('User ID:', userId)
+    
     const { items, clientId, paymentMethod, notes } = saleData;
 
     // Validate items
@@ -52,6 +57,7 @@ const createSale = async (saleData, userId) => {
     // Create sale record
     const saleRecord = {
       clientId: clientId || null,
+      saleDate: saleData.saleDate || new Date().toISOString(), // Use provided sale date or default to now
       totalAmount,
       paymentMethod: paymentMethod || 'Cash',
       status: saleData.status || 'Pending', // Use status from request or default to 'Pending'
@@ -60,6 +66,10 @@ const createSale = async (saleData, userId) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    console.log('=== Sale Record being sent to database ===')
+    console.log('Sale record:', saleRecord)
+    console.log('Sale date being sent:', saleRecord.saleDate)
 
     const { data: sale, error: saleError } = await supabase
       .from('sales')
@@ -86,7 +96,7 @@ const createSale = async (saleData, userId) => {
       .insert(saleItems)
       .select(`
         *,
-        inventory:itemId (
+        inventoryItem:itemId (
           itemId,
           itemName,
           category,
@@ -150,7 +160,7 @@ const getAllSales = async (filters = {}) => {
           quantity,
           unitPrice,
           totalPrice,
-          inventory:itemId (
+          inventoryItem:itemId (
             itemId,
             itemName,
             category
@@ -200,7 +210,9 @@ const getAllSales = async (filters = {}) => {
  */
 const getSaleById = async (saleId) => {
   try {
-    const { data, error } = await supabase
+    
+    // First, get the sale with basic info
+    const { data: saleData, error: saleError } = await supabase
       .from('sales')
       .select(`
         *,
@@ -210,36 +222,75 @@ const getSaleById = async (saleId) => {
           email,
           phone,
           address
-        ),
-        items:sale_items (
-          saleItemId,
-          quantity,
-          unitPrice,
-          totalPrice,
-          inventory:itemId (
-            itemId,
-            itemName,
-            category,
-            descripcionArticulo,
-            imageUrls
-          )
         )
       `)
       .eq('saleId', saleId)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
+    if (saleError) {
+      console.error('Sale query error:', saleError);
+      if (saleError.code === 'PGRST116') {
         throw new Error('Sale not found');
       }
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error(`Database error: ${saleError.message}`);
     }
+
+    // Then, get the sale items with inventory details
+    const { data: saleItems, error: itemsError } = await supabase
+      .from('sale_items')
+      .select(`
+        saleItemId,
+        quantity,
+        unitPrice,
+        totalPrice,
+        itemId
+      `)
+      .eq('saleId', saleId);
+
+    if (itemsError) {
+      console.error('Sale items query error:', itemsError);
+      throw new Error(`Failed to fetch sale items: ${itemsError.message}`);
+    }
+
+    // Get inventory details for all items
+    const itemIds = saleItems.map(item => item.itemId);
+    const { data: inventoryItems, error: inventoryError } = await supabase
+      .from('inventory')
+      .select(`
+        itemId,
+        friendlyId,
+        itemName,
+        category,
+        descripcionArticulo,
+        imageUrls
+      `)
+      .in('itemId', itemIds);
+
+    if (inventoryError) {
+      console.error('Inventory query error:', inventoryError);
+      throw new Error(`Failed to fetch inventory items: ${inventoryError.message}`);
+    }
+
+    // Combine the data
+    const enrichedItems = saleItems.map(saleItem => {
+      const inventoryItem = inventoryItems.find(inv => inv.itemId === saleItem.itemId);
+      return {
+        ...saleItem,
+        inventoryItem: inventoryItem || null
+      };
+    });
+
+    const result = {
+      ...saleData,
+      items: enrichedItems
+    };
 
     return {
       success: true,
-      data
+      data: result
     };
   } catch (error) {
+    console.error('Service error:', error);
     return {
       success: false,
       error: error.message
@@ -353,6 +404,132 @@ const getSalesStats = async (filters = {}) => {
 };
 
 /**
+ * Update sale details
+ */
+const updateSale = async (saleId, updateData, userId) => {
+  try {
+    console.log('=== Backend updateSale called ===')
+    console.log('Sale ID:', saleId)
+    console.log('Update data:', updateData)
+    console.log('User ID:', userId)
+    
+    // Validate required fields
+    if (!saleId) {
+      throw new Error('Sale ID is required')
+    }
+    
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+    
+    // Prepare update data (only allow certain fields to be updated)
+    const allowedUpdates = {
+      clientId: updateData.clientId,
+      saleDate: updateData.saleDate,
+      totalAmount: updateData.totalAmount,
+      paymentMethod: updateData.paymentMethod,
+      status: updateData.status,
+      notes: updateData.notes,
+      updatedAt: new Date().toISOString()
+    }
+    
+    // Remove undefined values
+    Object.keys(allowedUpdates).forEach(key => {
+      if (allowedUpdates[key] === undefined) {
+        delete allowedUpdates[key]
+      }
+    })
+    
+    console.log('Allowed updates:', allowedUpdates)
+    
+    // Update the sale record
+    const { data: updatedSale, error: updateError } = await supabase
+      .from('sales')
+      .update(allowedUpdates)
+      .eq('saleId', saleId)
+      .select()
+      .single()
+    
+    if (updateError) {
+      throw new Error(`Failed to update sale: ${updateError.message}`)
+    }
+    
+    console.log('Sale updated successfully:', updatedSale)
+    
+    // If items were updated, we need to handle them separately
+    if (updateData.items && Array.isArray(updateData.items)) {
+      // Delete existing items
+      const { error: deleteError } = await supabase
+        .from('sale_items')
+        .delete()
+        .eq('saleId', saleId)
+      
+      if (deleteError) {
+        throw new Error(`Failed to delete existing sale items: ${deleteError.message}`)
+      }
+      
+      // Create new items
+      const saleItems = updateData.items.map(item => ({
+        saleId: saleId,
+        itemId: item.itemId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        createdAt: new Date().toISOString()
+      }))
+      
+      const { data: createdItems, error: itemsError } = await supabase
+        .from('sale_items')
+        .insert(saleItems)
+        .select()
+      
+      if (itemsError) {
+        throw new Error(`Failed to create new sale items: ${itemsError.message}`)
+      }
+      
+      console.log('Sale items updated successfully:', createdItems)
+    }
+    
+    // Get the complete updated sale with items
+    const { data: completeSale, error: fetchError } = await supabase
+      .from('sales')
+      .select(`
+        *,
+        client:clientId (
+          clientId,
+          name,
+          email,
+          phone
+        ),
+        items:sale_items (
+          saleItemId,
+          quantity,
+          unitPrice,
+          totalPrice,
+          itemId
+        )
+      `)
+      .eq('saleId', saleId)
+      .single()
+    
+    if (fetchError) {
+      throw new Error(`Failed to fetch updated sale: ${fetchError.message}`)
+    }
+    
+    return {
+      success: true,
+      data: completeSale
+    }
+  } catch (error) {
+    console.error('Error in updateSale:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+/**
  * Get sales by client
  */
 const getSalesByClient = async (clientId) => {
@@ -366,7 +543,7 @@ const getSalesByClient = async (clientId) => {
           quantity,
           unitPrice,
           totalPrice,
-          inventory:itemId (
+          inventoryItem:itemId (
             itemId,
             itemName,
             category
@@ -396,6 +573,7 @@ module.exports = {
   createSale,
   getAllSales,
   getSaleById,
+  updateSale,
   updateSaleStatus,
   getSalesStats,
   getSalesByClient

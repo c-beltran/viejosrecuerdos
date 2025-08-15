@@ -74,12 +74,9 @@ export const useInventoryStore = defineStore('inventory', () => {
       
       const response = await ApiService.get<InventoryItem[]>(url)
       
-      console.log('Inventory API response:', response)
-      
       if (response.success && response.data) {
         // Handle nested data structure
         const itemsData = response.data.data || response.data
-        console.log('Items data to set:', itemsData)
         items.value = itemsData
         
         // Update pagination info from response
@@ -89,9 +86,6 @@ export const useInventoryStore = defineStore('inventory', () => {
         if (response.total !== undefined) {
           pagination.value.total = response.total
         }
-        
-        console.log('Inventory store items after update:', items.value)
-        
       } else {
         throw new Error(response.error || 'Failed to fetch inventory items')
       }
@@ -167,7 +161,6 @@ export const useInventoryStore = defineStore('inventory', () => {
   // Fetch all available inventory items for sales (no pagination limit)
   const fetchAllAvailableItems = async () => {
     try {
-      console.log('Fetching all available inventory items for sales...')
       
       // Build query parameters for all available items
       const params = new URLSearchParams()
@@ -177,20 +170,15 @@ export const useInventoryStore = defineStore('inventory', () => {
       params.append('includeQR', 'false')
       
       const url = `/inventory?${params.toString()}`
-      console.log('Fetching from URL:', url)
       
       const response = await ApiService.get<InventoryItem[]>(url)
-      
-      console.log('All available items API response:', response)
       
       if (response.success && response.data) {
         // Handle nested data structure
         const itemsData = response.data.data || response.data
-        console.log('All available items data:', itemsData)
         
         // Filter to only include items with currentQuantity > 0
         const availableItems = itemsData.filter(item => item.currentQuantity > 0)
-        console.log('Filtered available items (quantity > 0):', availableItems.length)
         
         // Store these items separately for sales use
         items.value = availableItems
@@ -198,8 +186,6 @@ export const useInventoryStore = defineStore('inventory', () => {
         // Update pagination info
         pagination.value.total = availableItems.length
         pagination.value.totalPages = 1
-        
-        console.log('Inventory store updated with all available items:', items.value.length)
         
         return availableItems
       } else {

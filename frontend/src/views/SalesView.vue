@@ -64,11 +64,12 @@
       <div class="card-antique p-6">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm text-vintage-gray">Avg Sale Value</p>
-            <p class="text-2xl font-bold text-vintage-charcoal">${{ formatCurrency(salesStats.averageSaleValue || 0) }}</p>
+            <p class="text-sm text-vintage-gray">Active Installments</p>
+            <p class="text-2xl font-bold text-vintage-charcoal">{{ getActiveInstallmentCount() }}</p>
+            <p class="text-sm text-vintage-gray mt-1">${{ formatCurrency(getTotalOutstandingAmount()) }} outstanding</p>
           </div>
           <div class="p-3 bg-purple-100 rounded-full">
-            <BarChart3 class="w-6 h-6 text-purple-600" />
+            <CreditCard class="w-6 h-6 text-purple-600" />
           </div>
         </div>
       </div>
@@ -76,9 +77,10 @@
 
     <!-- Filters and Search -->
     <div class="card-antique p-6 mb-6">
-      <div class="flex flex-col lg:flex-row gap-4">
+      <div class="flex flex-col gap-4">
         <!-- Search Bar -->
         <div class="flex-1">
+          <label class="block text-sm font-medium text-vintage-charcoal mb-2">Search Sales</label>
           <div class="relative">
             <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-vintage-gray w-4 h-4" />
             <input
@@ -98,74 +100,89 @@
           </div>
         </div>
 
-        <!-- Status Filter -->
-        <div class="w-full lg:w-48">
-          <select
-            v-model="filters.status"
-            @change="applyFilters"
-            class="w-full px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
-          >
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-            <option value="Refunded">Refunded</option>
-          </select>
-        </div>
+        <!-- Filter Controls -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Status Filter -->
+          <div class="w-full">
+            <label class="block text-sm font-medium text-vintage-charcoal mb-2">Status</label>
+            <select
+              v-model="filters.status"
+              @change="applyFilters"
+              class="w-full px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
+            >
+              <option value="" disabled>Select Status</option>
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Refunded">Refunded</option>
+            </select>
+          </div>
 
-        <!-- Payment Method Filter -->
-        <div class="w-full lg:w-48">
-          <select
-            v-model="filters.paymentMethod"
-            @change="applyFilters"
-            class="w-full px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
-          >
-            <option value="">All Payment Methods</option>
-            <option value="Cash">Cash</option>
-            <option value="Credit Card">Credit Card</option>
-            <option value="Debit Card">Debit Card</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-            <option value="Check">Check</option>
-          </select>
-        </div>
+          <!-- Payment Method Filter -->
+          <div class="w-full">
+            <label class="block text-sm font-medium text-vintage-charcoal mb-2">Payment Method</label>
+            <select
+              v-model="filters.paymentMethod"
+              @change="applyFilters"
+              class="w-full px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
+            >
+              <option value="" disabled>Select Payment Method</option>
+              <option value="">All Payment Methods</option>
+              <option value="Cash">Cash</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Check">Check</option>
+            </select>
+          </div>
 
-        <!-- Date Range -->
-        <div class="flex gap-2">
-          <input
-            v-model="filters.startDate"
-            type="date"
-            @change="applyFilters"
-            class="px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
-          />
-          <input
-            v-model="filters.endDate"
-            type="date"
-            @change="applyFilters"
-            class="px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
-          />
-        </div>
+          <!-- Date Range -->
+          <div class="w-full sm:col-span-2">
+            <label class="block text-sm font-medium text-vintage-charcoal mb-2">Date Range</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="relative flex-1 min-w-0">
+                <input
+                  v-model="filters.startDate"
+                  type="date"
+                  @change="applyFilters"
+                  class="w-full px-3 py-3 pr-8 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white text-sm"
+                  :placeholder="getDefaultStartDate()"
+                />
+                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-vintage-gray">
+                  From
+                </span>
+              </div>
+              <div class="relative flex-1 min-w-0">
+                <input
+                  v-model="filters.endDate"
+                  type="date"
+                  @change="applyFilters"
+                  class="w-full px-3 py-3 pr-8 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white text-sm"
+                  :placeholder="getDefaultEndDate()"
+                />
+                <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-vintage-gray">
+                  To
+                </span>
+              </div>
+            </div>
+          </div>
 
-        <!-- Clear Filters -->
-        <button
-          @click="clearFilters"
-          class="btn-secondary px-4 py-3"
-        >
-          Clear Filters
-        </button>
+          <!-- Clear Filters -->
+          <div class="w-full sm:col-span-2 lg:col-span-1 flex items-end">
+            <button
+              @click="clearFilters"
+              class="w-full btn-secondary px-4 py-3"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Sales List -->
     <div class="card-antique overflow-hidden">
-      <!-- Installment Summary -->
-      <div v-if="salesStore.installmentPlans.length > 0" class="px-6 py-3 bg-blue-50 border-b border-blue-200">
-        <div class="text-sm text-blue-800">
-          <span class="font-medium">📊 Installment Summary:</span>
-          <span class="ml-2">{{ salesStore.installmentPlans.length }} active installment plans</span>
-          <span class="ml-4">Total outstanding: ${{ formatCurrency(getTotalOutstandingAmount()) }}</span>
-        </div>
-      </div>
-      
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-vintage-beige">
@@ -276,7 +293,7 @@
                     Complete
                   </button>
                   <button
-                    v-if="sale.saleId && sale.status === 'Completed'"
+                    v-if="sale.saleId && sale.status === 'Completed' && isInstallmentSale(sale.saleId)"
                     @click="openInstallmentModal(sale)"
                     class="text-blue-600 hover:text-blue-800 transition-colors"
                   >
@@ -345,9 +362,23 @@ import {
   DollarSign,
   CheckCircle,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-vue-next'
 import type { Sale, SaleFilters } from '@/types'
+
+// Helper functions for default date values
+const getDefaultStartDate = () => {
+  // Default to 30 days ago
+  const date = new Date()
+  date.setDate(date.getDate() - 30)
+  return date.toISOString().split('T')[0]
+}
+
+const getDefaultEndDate = () => {
+  // Default to today
+  return new Date().toISOString().split('T')[0]
+}
 
 // Composables
 const router = useRouter()
@@ -372,8 +403,8 @@ const salesStats = ref({
 const filters = ref<SaleFilters>({
   status: undefined,
   paymentMethod: undefined,
-  startDate: undefined,
-  endDate: undefined,
+  startDate: getDefaultStartDate(), // Set default start date (30 days ago)
+  endDate: getDefaultEndDate(), // Set default end date (today)
   limit: 20,
   offset: 0
 })
@@ -387,14 +418,58 @@ const filteredSales = computed(() => {
   // Use the safe getter from the store
   let filtered = salesStore.getSales
   
+  // Debug: Log initial count
+  console.log('Initial sales count:', filtered.length)
+  
   // Apply search
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
+    const beforeSearch = filtered.length
     filtered = filtered.filter(sale => 
       sale.saleId.toLowerCase().includes(query) ||
       (sale.client?.name && sale.client.name.toLowerCase().includes(query)) ||
       (sale.notes && sale.notes.toLowerCase().includes(query))
     )
+    console.log(`Search filter applied: ${beforeSearch} -> ${filtered.length} results`)
+  }
+  
+  // Apply status filter
+  if (filters.value.status) {
+    const beforeStatus = filtered.length
+    filtered = filtered.filter(sale => sale.status === filters.value.status)
+    console.log(`Status filter (${filters.value.status}) applied: ${beforeStatus} -> ${filtered.length} results`)
+  }
+  
+  // Apply payment method filter
+  if (filters.value.paymentMethod) {
+    const beforePayment = filtered.length
+    filtered = filtered.filter(sale => sale.paymentMethod === filters.value.paymentMethod)
+    console.log(`Payment method filter (${filters.value.paymentMethod}) applied: ${beforePayment} -> ${filtered.length} results`)
+  }
+  
+  // Apply date range filters
+  if (filters.value.startDate) {
+    const beforeStartDate = filtered.length
+    filtered = filtered.filter(sale => {
+      if (!sale.saleDate) return false
+      const saleDate = new Date(sale.saleDate)
+      const startDate = new Date(filters.value.startDate)
+      return saleDate >= startDate
+    })
+    console.log(`Start date filter (${filters.value.startDate}) applied: ${beforeStartDate} -> ${filtered.length} results`)
+  }
+  
+  if (filters.value.endDate) {
+    const beforeEndDate = filtered.length
+    filtered = filtered.filter(sale => {
+      if (!sale.saleDate) return false
+      const saleDate = new Date(sale.saleDate)
+      const endDate = new Date(filters.value.endDate)
+      // Set end date to end of day for inclusive filtering
+      endDate.setHours(23, 59, 59, 999)
+      return saleDate <= endDate
+    })
+    console.log(`End date filter (${filters.value.endDate}) applied: ${beforeEndDate} -> ${filtered.length} results`)
   }
   
   // Sort by sale date (newest first)
@@ -403,6 +478,7 @@ const filteredSales = computed(() => {
     return new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime()
   })
   
+  console.log('Final filtered results:', filtered.length)
   return filtered
 })
 
@@ -414,6 +490,16 @@ const paginatedSales = computed(() => {
 
 const isFirstPage = computed(() => currentPage.value <= 1)
 const isLastPage = computed(() => currentPage.value >= totalPages.value)
+
+// Helper functions for installment calculations
+const getActiveInstallmentCount = () => {
+  // Only count plans that are not completed (fully paid)
+  return salesStore.installmentPlans.filter(plan => {
+    const totalPaid = getAmountPaidForSale(plan.saleId)
+    const totalAmount = plan.totalAmount || 0
+    return totalPaid < totalAmount // Only active if not fully paid
+  }).length
+}
 
 // Methods
 const loadSales = async () => {
@@ -479,24 +565,30 @@ const handleSearch = () => {
 const clearSearch = () => {
   searchQuery.value = ''
   currentPage.value = 1
+  // Force a reactive update by triggering the computed property
+  // The filteredSales computed will automatically update when searchQuery changes
 }
 
 const applyFilters = () => {
   currentPage.value = 1
-  loadSales()
+  // No need to reload sales - the computed filteredSales will automatically update
+  // when filters change due to Vue's reactivity system
 }
 
 const clearFilters = () => {
+  // Reset all filters
   filters.value = {
     status: undefined,
     paymentMethod: undefined,
-  startDate: undefined,
+    startDate: undefined,
     endDate: undefined,
     limit: 20,
     offset: 0
   }
+  // Reset search query as well
+  searchQuery.value = ''
   currentPage.value = 1
-  loadSales()
+  // No need to reload sales - the computed filteredSales will automatically update
 }
 
 const handlePageChange = (newPage: number) => {
@@ -572,15 +664,6 @@ const getAmountPaidForSale = (saleId: string) => {
   const planPayments = salesStore.payments.filter(payment => payment.planId === plan.planId)
   totalPaid += planPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0)
   
-  // Debug logging
-  console.log(`Amount paid calculation for sale ${saleId}:`, {
-    planId: plan.planId,
-    downPayment: plan.downPayment,
-    additionalPayments: planPayments.length,
-    totalPaid,
-    planTotal: plan.totalAmount
-  })
-  
   return totalPaid
 }
 
@@ -597,18 +680,29 @@ const isInstallmentSale = (saleId: string) => {
 }
 
 const getTotalOutstandingAmount = () => {
-  let total = 0
-  salesStore.installmentPlans.forEach(plan => {
+  // Calculate total outstanding for all active plans only
+  return salesStore.installmentPlans.reduce((total, plan) => {
     const amountPaid = getAmountPaidForSale(plan.saleId)
-    total += (plan.totalAmount - amountPaid)
-  })
-  return total
+    const totalAmount = plan.totalAmount || 0
+    const remaining = totalAmount - amountPaid
+    
+    // Only include if there's still money owed (active plans)
+    if (remaining > 0) {
+      return total + remaining
+    }
+    return total
+  }, 0)
 }
 
 // Watchers
 watch(searchQuery, () => {
   currentPage.value = 1
 })
+
+// Watch for filter changes to reset pagination
+watch(filters, () => {
+  currentPage.value = 1
+}, { deep: true })
 
 // Lifecycle
 onMounted(() => {

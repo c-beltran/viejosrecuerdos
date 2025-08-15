@@ -70,7 +70,7 @@
           <select
             v-model="statusFilter"
             @change="applyFilters"
-            class="w-full lg:w-48 px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+            class="w-full lg:w-48 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
           >
             <option value="">All Statuses</option>
             <option value="Active">Active</option>
@@ -152,8 +152,8 @@
                 ${{ formatCurrency(getAmountPaid(plan.planId)) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getStatusBadgeClass(plan.status)">
-                  {{ plan.status }}
+                <span :class="getStatusBadgeClass(getEffectiveStatus(plan))">
+                  {{ getEffectiveStatus(plan) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-vintage-gray">
@@ -168,12 +168,18 @@
                     View
                   </button>
                   <button
-                    v-if="plan.status === 'Active'"
+                    v-if="!isPlanCompleted(plan)"
                     @click="recordPayment(plan)"
                     class="text-green-600 hover:text-green-800 transition-colors"
                   >
                     Payment
                   </button>
+                  <span
+                    v-else
+                    class="text-green-600 font-medium text-sm"
+                  >
+                    ✓ Paid
+                  </span>
                 </div>
               </td>
             </tr>
@@ -212,6 +218,15 @@
             <!-- Plan Summary -->
             <div class="bg-vintage-ivory p-4 rounded-lg">
               <h4 class="font-medium text-vintage-charcoal mb-2">Plan Summary</h4>
+              
+              <!-- Completion Status Alert -->
+              <div v-if="isPlanCompleted(selectedPlan)" class="mb-3 p-2 bg-green-100 border border-green-300 rounded-lg">
+                <div class="flex items-center gap-2 text-green-800 text-sm">
+                  <span class="font-medium">✓</span>
+                  <span>This installment plan is fully paid!</span>
+                </div>
+              </div>
+              
               <div class="text-sm text-vintage-gray space-y-1">
                 <div>Client: {{ getClientName(selectedPlan?.saleId || '') }}</div>
                 <div>Total: ${{ formatCurrency(selectedPlan?.totalAmount || 0) }}</div>
@@ -222,7 +237,7 @@
             </div>
             
             <!-- Payment Form -->
-            <div>
+            <div v-if="!isPlanCompleted(selectedPlan)">
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
                 Payment Amount
               </label>
@@ -232,29 +247,29 @@
                 step="0.01"
                 min="0"
                 :max="getRemainingAmount(selectedPlan)"
-                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+                class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
                 placeholder="Enter payment amount"
               />
             </div>
             
-            <div>
+            <div v-if="!isPlanCompleted(selectedPlan)">
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
                 Payment Date
               </label>
               <input
                 v-model="paymentForm.paymentDate"
                 type="date"
-                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+                class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
               />
             </div>
             
-            <div>
+            <div v-if="!isPlanCompleted(selectedPlan)">
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
                 Payment Method
               </label>
               <select
                 v-model="paymentForm.paymentMethod"
-                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+                class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
               >
                 <option value="Cash">Cash</option>
                 <option value="Bank Transfer">Bank Transfer</option>
@@ -264,20 +279,20 @@
               </select>
             </div>
             
-            <div>
+            <div v-if="!isPlanCompleted(selectedPlan)">
               <label class="block text-sm font-medium text-vintage-charcoal mb-2">
                 Notes (Optional)
               </label>
               <textarea
                 v-model="paymentForm.notes"
                 rows="3"
-                class="w-full px-3 py-2 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent"
+                class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
                 placeholder="Additional notes about this payment"
               ></textarea>
             </div>
             
             <!-- Payment Preview -->
-            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <div v-if="!isPlanCompleted(selectedPlan)" class="bg-blue-50 p-3 rounded-lg border border-blue-200">
               <div class="text-sm text-blue-800">
                 <div class="font-medium mb-1">Payment Preview:</div>
                 <div>After this payment of ${{ formatCurrency(paymentForm.amount || 0) }}:</div>
@@ -296,11 +311,19 @@
             Cancel
           </button>
           <button
+            v-if="!isPlanCompleted(selectedPlan)"
             @click="submitPayment"
             :disabled="!canSubmitPayment"
             class="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Record Payment
+          </button>
+          <button
+            v-else
+            disabled
+            class="btn-secondary flex-1 opacity-50 cursor-not-allowed"
+          >
+            Plan Completed ✓
           </button>
         </div>
       </div>
@@ -331,7 +354,7 @@
                   </div>
                   <div class="flex justify-between">
                     <span class="text-vintage-gray">Status:</span>
-                    <span :class="getStatusBadgeClass(selectedPlan.status)">{{ selectedPlan.status }}</span>
+                    <span :class="getStatusBadgeClass(getEffectiveStatus(selectedPlan))">{{ getEffectiveStatus(selectedPlan) }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-vintage-gray">Total Amount:</span>
@@ -481,12 +504,20 @@ const statusFilter = ref('')
 
 // Computed properties
 const activePlansCount = computed(() => 
-  installmentPlans.value.filter(plan => plan.status === 'Active').length
+  installmentPlans.value.filter(plan => {
+    // Only count as active if status is Active AND not fully completed
+    if (plan.status !== 'Active') return false
+    return !isPlanCompleted(plan)
+  }).length
 )
 
 const totalOutstanding = computed(() => {
   return installmentPlans.value
-    .filter(plan => plan.status === 'Active')
+    .filter(plan => {
+      // Only include in outstanding if status is Active AND not fully completed
+      if (plan.status !== 'Active') return false
+      return !isPlanCompleted(plan)
+    })
     .reduce((sum, plan) => {
       const amountPaid = getAmountPaid(plan.planId)
       return sum + (plan.totalAmount - amountPaid)
@@ -496,7 +527,9 @@ const totalOutstanding = computed(() => {
 const overduePaymentsCount = computed(() => {
   const today = new Date()
   return installmentPlans.value.filter(plan => {
+    // Only check overdue for active plans that are not fully completed
     if (plan.status !== 'Active') return false
+    if (isPlanCompleted(plan)) return false
     const dueDate = new Date(plan.dueDate)
     return dueDate < today
   }).length
@@ -530,6 +563,21 @@ const getNewRemaining = () => {
   const currentRemaining = getRemainingAmount(selectedPlan.value)
   const newPayment = paymentForm.value.amount || 0
   return currentRemaining - newPayment
+}
+
+// Check if an installment plan is completed (fully paid)
+const isPlanCompleted = (plan: InstallmentPlan) => {
+  const totalPaid = getAmountPaid(plan.planId)
+  const totalAmount = plan.totalAmount || 0
+  return totalPaid >= totalAmount
+}
+
+// Get the effective status for display (auto-update to Completed if fully paid)
+const getEffectiveStatus = (plan: InstallmentPlan) => {
+  if (isPlanCompleted(plan)) {
+    return 'Completed'
+  }
+  return plan.status || 'Active'
 }
 
 const filteredInstallmentPlans = computed(() => {
