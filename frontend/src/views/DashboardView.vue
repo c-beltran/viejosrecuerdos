@@ -17,7 +17,10 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-vintage-gray text-sm font-medium">Total Items</p>
-            <p class="text-3xl font-display text-vintage-charcoal">{{ stats.totalItems || 0 }}</p>
+            <p class="text-3xl font-display text-vintage-charcoal">
+              <span v-if="isLoading" class="text-vintage-gray">Loading...</span>
+              <span v-else>{{ stats.totalItems || 0 }}</span>
+            </p>
           </div>
           <div class="w-12 h-12 bg-antique-gold/10 rounded-lg flex items-center justify-center">
             <Package class="w-6 h-6 text-antique-gold" />
@@ -25,38 +28,47 @@
         </div>
       </div>
 
-      <!-- Total Sales -->
+            <!-- Total Sales -->
       <div class="card-antique p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-vintage-gray text-sm font-medium">Total Sales</p>
-            <p class="text-3xl font-display text-vintage-charcoal">{{ stats.totalSales || 0 }}</p>
+            <p class="text-3xl font-display text-vintage-charcoal">
+              <span v-if="isLoading" class="text-vintage-gray">Loading...</span>
+              <span v-else>{{ stats.totalSales || 0 }}</span>
+            </p>
           </div>
           <div class="w-12 h-12 bg-vintage-green/10 rounded-lg flex items-center justify-center">
             <ShoppingCart class="w-6 h-6 text-vintage-green" />
           </div>
         </div>
       </div>
-
+      
       <!-- Total Clients -->
       <div class="card-antique p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-vintage-gray text-sm font-medium">Total Clients</p>
-            <p class="text-3xl font-display text-vintage-charcoal">{{ stats.totalClients || 0 }}</p>
+            <p class="text-3xl font-display text-vintage-charcoal">
+              <span v-if="isLoading" class="text-vintage-gray">Loading...</span>
+              <span v-else>{{ stats.totalClients || 0 }}</span>
+            </p>
           </div>
           <div class="w-12 h-12 bg-vintage-blue/10 rounded-lg flex items-center justify-center">
-            <Users class="w-6 h-6 text-vintage-blue" />
+            <Users class="w-6 h-6 text-vintage-charcoal" />
           </div>
         </div>
       </div>
-
+      
       <!-- Active Installments -->
       <div class="card-antique p-6">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-vintage-gray text-sm font-medium">Active Installments</p>
-            <p class="text-3xl font-display text-vintage-charcoal">{{ stats.activeInstallments || 0 }}</p>
+            <p class="text-3xl font-display text-vintage-charcoal">
+              <span v-if="isLoading" class="text-vintage-gray">Loading...</span>
+              <span v-else>{{ stats.activeInstallments || 0 }}</span>
+            </p>
           </div>
           <div class="w-12 h-12 bg-vintage-rose/10 rounded-lg flex items-center justify-center">
             <CreditCard class="w-6 h-6 text-vintage-rose" />
@@ -102,50 +114,40 @@
         </div>
       </div>
 
-      <!-- Low Stock Items -->
+      <!-- Recent Payments -->
       <div class="card-antique p-6">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="font-display text-xl text-vintage-charcoal">Low Stock Items</h2>
+          <h2 class="font-display text-xl text-vintage-charcoal">Recent Payments</h2>
           <router-link 
-            to="/inventory" 
+            to="/installments" 
             class="text-antique-gold hover:text-antique-bronze text-sm font-medium transition-colors"
           >
             View All
           </router-link>
         </div>
         
-        <div v-if="stats.lowStockItems && stats.lowStockItems.length > 0" class="space-y-4">
+        <div v-if="stats.recentPayments && stats.recentPayments.length > 0" class="space-y-4">
           <div 
-            v-for="item in stats.lowStockItems.slice(0, 5)" 
-            :key="item.itemId"
+            v-for="payment in stats.recentPayments.slice(0, 5)" 
+            :key="payment.paymentId"
             class="flex items-center justify-between p-4 bg-vintage-cream rounded-lg"
           >
-            <div class="flex items-center space-x-3">
-              <div v-if="item.imageUrls && item.imageUrls.length > 0" class="w-10 h-10 rounded-lg overflow-hidden">
-                <img 
-                  :src="item.imageUrls[0].url" 
-                  :alt="item.itemName"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div v-else class="w-10 h-10 bg-vintage-beige rounded-lg flex items-center justify-center">
-                <Package class="w-5 h-5 text-vintage-gray" />
-              </div>
-              <div>
-                <p class="font-medium text-vintage-charcoal">{{ item.itemName }}</p>
-                <p class="text-sm text-vintage-gray">{{ item.category }}</p>
-              </div>
+            <div>
+              <p class="font-medium text-vintage-charcoal">Payment #{{ payment.paymentNumber }}</p>
+              <p class="text-sm text-vintage-gray">{{ formatDate(payment.paymentDate) }}</p>
             </div>
             <div class="text-right">
-              <p class="font-medium text-vintage-charcoal">{{ item.currentQuantity }}</p>
-              <p class="text-sm text-vintage-gray">in stock</p>
+              <p class="font-medium text-vintage-charcoal">${{ payment.amount.toFixed(2) }}</p>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                {{ payment.paymentMethod }}
+              </span>
             </div>
           </div>
         </div>
         
         <div v-else class="text-center py-8">
-          <Package class="w-12 h-12 text-vintage-gray mx-auto mb-4" />
-          <p class="text-vintage-gray">All items well stocked</p>
+          <CreditCard class="w-12 h-12 text-vintage-gray mx-auto mb-4" />
+          <p class="text-vintage-gray">No recent payments</p>
         </div>
       </div>
     </div>
@@ -199,6 +201,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useInventoryStore } from '@/stores/inventory'
 import { useSalesStore } from '@/stores/sales'
+import { useClientStore } from '@/stores/client'
 import { 
   Package, 
   ShoppingCart, 
@@ -213,15 +216,17 @@ import { DashboardStats } from '@/types'
 const authStore = useAuthStore()
 const inventoryStore = useInventoryStore()
 const salesStore = useSalesStore()
+const clientStore = useClientStore()
 
 // Reactive state
+const isLoading = ref(false)
 const stats = ref<DashboardStats>({
   totalItems: 0,
   totalSales: 0,
   totalClients: 0,
   activeInstallments: 0,
   recentSales: [],
-  lowStockItems: [],
+  recentPayments: [],
   upcomingPayments: []
 })
 
@@ -252,24 +257,59 @@ const getStatusBadgeClass = (status: string) => {
 
 const loadDashboardData = async () => {
   try {
-    // Load inventory stats
-    const inventoryStats = await inventoryStore.getStats()
+    isLoading.value = true
     
-    // Load recent sales
-    await salesStore.fetchSales({ limit: 5 })
+    // Load inventory data
+    await inventoryStore.fetchItems({ limit: 1000 }) // Get all items for counting
+    
+    // Load sales data
+    await salesStore.fetchSales({ limit: 1000 }) // Get all sales for counting
+    
+    // Load installment plans and payments
+    await salesStore.fetchInstallmentPlans()
+    await salesStore.fetchPayments()
+    
+    // Load clients data
+    await clientStore.fetchClients({ limit: 1000 }) // Get all clients for counting
+    
+    // Calculate stats from loaded data
+    const totalItems = inventoryStore.totalItems || inventoryStore.items.length
+    const totalSales = salesStore.totalSales || salesStore.sales.length
+    const totalClients = clientStore.totalClients || clientStore.getClients.length
+    
+    // Calculate active installments (plans that are not fully paid)
+    const activeInstallments = salesStore.installmentPlans.filter(plan => {
+      if (plan.status !== 'Active') return false
+      const amountPaid = salesStore.payments
+        .filter(p => p.planId === plan.planId)
+        .reduce((sum, payment) => sum + (payment.amount || 0), 0)
+      return (plan.totalAmount - amountPaid) > 0
+    }).length
+    
+    // Get recent sales (last 5)
+    const recentSales = salesStore.sales.slice(0, 5)
+    
+    // Get recent payments (last 5)
+    const recentPayments = salesStore.payments
+      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+      .slice(0, 5)
     
     // Update stats
     stats.value = {
-      totalItems: inventoryStats?.totalItems || 0,
-      totalSales: inventoryStats?.totalSales || 0,
-      totalClients: inventoryStats?.totalClients || 0,
-      activeInstallments: inventoryStats?.activeInstallments || 0,
-      recentSales: salesStore.sales.slice(0, 5),
-      lowStockItems: inventoryStats?.lowStockItems || [],
+      totalItems,
+      totalSales,
+      totalClients,
+      activeInstallments,
+      recentSales,
+      recentPayments,
       upcomingPayments: []
     }
+    
+    console.log('Dashboard stats loaded:', stats.value)
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 

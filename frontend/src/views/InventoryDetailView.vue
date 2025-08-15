@@ -359,7 +359,13 @@ const loadItem = async () => {
     console.log('Loaded item:', loadedItem)
     if (loadedItem) {
       item.value = loadedItem
-      console.log('Item set in component:', item.value)
+      console.log('Frontend - Item set in component:', item.value)
+      console.log('Frontend - Date fields:', {
+        createdAt: item.value.createdAt,
+        updatedAt: item.value.updatedAt,
+        createDate: item.value.createDate,
+        updatedDate: item.value.updatedDate
+      })
     } else {
       error.value = 'Item not found'
     }
@@ -442,14 +448,31 @@ const formatPrice = (price: number | undefined) => {
   return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+const formatDate = (dateString: string | null | undefined) => {
+
+  
+  if (!dateString) {
+    return 'N/A'
+  }
+  
+  try {
+    const date = new Date(dateString)
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date'
+    }
+    
+    // Format as DD-MM-YYYY
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const year = date.getFullYear()
+    
+    return `${day}-${month}-${year}`
+  } catch (error) {
+    console.error('Error formatting date:', dateString, error)
+    return 'Invalid Date'
+  }
 }
 
 const getValidImages = (imageUrls: any[] | undefined) => {

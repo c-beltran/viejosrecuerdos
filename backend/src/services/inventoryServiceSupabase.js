@@ -47,6 +47,25 @@ const getAllItems = async (filters = {}) => {
         return { ...item, qrCodeUrl };
       });
     }
+    
+    // Map database column names to frontend expected names for all items
+    items = items.map((item) => {
+      const mappedItem = {
+        ...item,
+        createdAt: item.createDate,
+        updatedAt: item.updatedDate
+      };
+      
+      // Debug logging for first item
+      if (item === items[0]) {
+        console.log('Backend - First item mapping:', {
+          original: { createDate: item.createDate, updatedDate: item.updatedDate },
+          mapped: { createdAt: mappedItem.createdAt, updatedAt: mappedItem.updatedAt }
+        });
+      }
+      
+      return mappedItem;
+    });
 
     return {
       success: true,
@@ -88,14 +107,31 @@ const getItemById = async (itemId) => {
 
     // Generate QR code URL on-demand
     const qrCodeUrl = generateQRCodeUrl(itemId);
-    const itemWithQR = {
+    
+    // Debug logging
+    console.log('Backend - Raw data from database:', {
+      createDate: data.createDate,
+      updatedDate: data.updatedDate,
+      itemId: data.itemId
+    });
+    
+    // Map database column names to frontend expected names
+    const mappedItem = {
       ...data,
-      qrCodeUrl
+      qrCodeUrl,
+      // Map database columns to frontend expected names
+      createdAt: data.createDate,
+      updatedAt: data.updatedDate
     };
+    
+    console.log('Backend - Mapped item:', {
+      createdAt: mappedItem.createdAt,
+      updatedAt: mappedItem.updatedAt
+    });
 
     return {
       success: true,
-      data: itemWithQR
+      data: mappedItem
     };
   } catch (error) {
     return {
@@ -125,14 +161,19 @@ const getItemByFriendlyId = async (friendlyId) => {
 
     // Generate QR code URL on-demand
     const qrCodeUrl = generateQRCodeUrl(data.itemId);
-    const itemWithQR = {
+    
+    // Map database column names to frontend expected names
+    const mappedItem = {
       ...data,
-      qrCodeUrl
+      qrCodeUrl,
+      // Map database columns to frontend expected names
+      createdAt: data.createDate,
+      updatedAt: data.updatedDate
     };
 
     return {
       success: true,
-      data: itemWithQR
+      data: mappedItem
     };
   } catch (error) {
     return {
@@ -164,9 +205,16 @@ const createItem = async (itemData, userId) => {
       throw new Error(`Database error: ${error.message}`);
     }
 
+    // Map database column names to frontend expected names
+    const mappedItem = {
+      ...data,
+      createdAt: data.createDate,
+      updatedAt: data.updatedDate
+    };
+
     return {
       success: true,
-      data
+      data: mappedItem
     };
   } catch (error) {
     return {
@@ -201,9 +249,16 @@ const updateItem = async (itemId, updateData, userId) => {
       throw new Error(`Database error: ${error.message}`);
     }
 
+    // Map database column names to frontend expected names
+    const mappedItem = {
+      ...data,
+      createdAt: data.createDate,
+      updatedAt: data.updatedDate
+    };
+
     return {
       success: true,
-      data
+      data: mappedItem
     };
   } catch (error) {
     return {

@@ -35,6 +35,7 @@ export const useClientStore = defineStore('client', () => {
   const error = computed(() => loading.value.error)
   const hasClients = computed(() => clients.value.length > 0)
   const totalClients = computed(() => pagination.value.total)
+  const getClients = computed(() => clients.value)
 
   // Actions
   const setLoading = (isLoading: boolean, error: string | null = null) => {
@@ -225,6 +226,7 @@ export const useClientStore = defineStore('client', () => {
     error,
     hasClients,
     totalClients,
+    getClients,
     
     // Actions
     setLoading,

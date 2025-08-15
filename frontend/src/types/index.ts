@@ -297,7 +297,7 @@ export interface DashboardStats {
   totalClients: number;
   activeInstallments: number;
   recentSales: Sale[];
-  lowStockItems: InventoryItem[];
+  recentPayments: InstallmentPayment[];
   upcomingPayments: InstallmentPayment[];
 }
 

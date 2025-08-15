@@ -144,12 +144,19 @@ const getAllItems = async (req, res) => {
 const getItemById = async (req, res) => {
   try {
     const { itemId } = req.params;
-    const item = await inventoryService.getItemById(itemId);
+    const result = await inventoryService.getItemById(itemId);
     
-    res.status(200).json({
-      success: true,
-      data: item
-    });
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        data: result.data
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error
+      });
+    }
   } catch (error) {
     const statusCode = error.message === 'Item not found' ? 404 : 500;
     res.status(statusCode).json({
@@ -204,12 +211,19 @@ const getItemById = async (req, res) => {
 const getItemByFriendlyId = async (req, res) => {
   try {
     const { friendlyId } = req.params;
-    const item = await inventoryService.getItemByFriendlyId(friendlyId);
+    const result = await inventoryService.getItemByFriendlyId(friendlyId);
     
-    res.status(200).json({
-      success: true,
-      data: item
-    });
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        data: result.data
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error
+      });
+    }
   } catch (error) {
     const statusCode = error.message === 'Item not found' ? 404 : 500;
     res.status(statusCode).json({
