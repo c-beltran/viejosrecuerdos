@@ -82,6 +82,14 @@
         
         <div class="flex gap-2">
           <button
+            @click="exportInstallments"
+            class="btn-secondary flex items-center gap-2"
+            title="Export to Excel"
+          >
+            <Download class="w-4 h-4" />
+            Export
+          </button>
+          <button
             @click="loadInstallments"
             class="btn-primary flex items-center gap-2"
           >
@@ -461,6 +469,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useSalesStore } from '@/stores/sales'
 import { useClientStore } from '@/stores/client'
+import * as XLSX from 'xlsx'
 import { 
   ArrowLeft,
   Clock,
@@ -469,7 +478,8 @@ import {
   AlertCircle,
   X,
   CreditCard,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-vue-next'
 import type { InstallmentPlan, Sale, InstallmentPayment } from '@/types'
 
@@ -787,6 +797,92 @@ const applyFilters = () => {
 
 const goBack = () => {
   router.push('/sales')
+}
+
+const exportInstallments = async () => {
+  try {
+    // Get all installment plans data
+    const allPlans = installmentPlans.value
+    
+    if (!allPlans || allPlans.length === 0) {
+      toast.error('No installment data to export')
+      return
+    }
+    
+    // Prepare data for export
+    const exportData = allPlans.map(plan => {
+      const sale = sales.value.find(s => s.saleId === plan.saleId)
+      const client = sale?.client
+      const amountPaid = getAmountPaid(plan.planId)
+      const remainingAmount = getRemainingAmount(plan)
+      const isCompleted = isPlanCompleted(plan)
+      
+      return {
+        'Plan ID': plan.planId,
+        'Sale ID': plan.saleId,
+        'Client Name': client?.name || 'N/A',
+        'Client Email': client?.email || 'N/A',
+        'Client Phone': client?.phone || 'N/A',
+        'Total Amount': `$${formatCurrency(plan.totalAmount)}`,
+        'Down Payment': `$${formatCurrency(plan.downPayment)}`,
+        'Installment Amount': `$${formatCurrency(plan.installmentAmount)}`,
+        'Number of Installments': plan.numberOfInstallments,
+        'Installment Frequency': plan.installmentFrequency,
+        'Start Date': formatDate(plan.startDate),
+        'Due Date': formatDate(plan.dueDate),
+        'Amount Paid': `$${formatCurrency(amountPaid)}`,
+        'Remaining Amount': `$${formatCurrency(remainingAmount)}`,
+        'Status': isCompleted ? 'Completed' : plan.status,
+        'Is Completed': isCompleted ? 'Yes' : 'No',
+        'Notes': plan.notes || 'N/A',
+        'Created Date': formatDate(plan.createdAt),
+        'Updated Date': formatDate(plan.updatedAt)
+      }
+    })
+    
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new()
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 15 }, // Plan ID
+      { wch: 15 }, // Sale ID
+      { wch: 20 }, // Client Name
+      { wch: 25 }, // Client Email
+      { wch: 15 }, // Client Phone
+      { wch: 15 }, // Total Amount
+      { wch: 15 }, // Down Payment
+      { wch: 18 }, // Installment Amount
+      { wch: 20 }, // Number of Installments
+      { wch: 20 }, // Installment Frequency
+      { wch: 15 }, // Start Date
+      { wch: 15 }, // Due Date
+      { wch: 15 }, // Amount Paid
+      { wch: 15 }, // Remaining Amount
+      { wch: 12 }, // Status
+      { wch: 12 }, // Is Completed
+      { wch: 30 }, // Notes
+      { wch: 15 }, // Created Date
+      { wch: 15 }  // Updated Date
+    ]
+    worksheet['!cols'] = columnWidths
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Installment Plans')
+    
+    // Generate filename with current date
+    const currentDate = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const filename = `installments_export_${currentDate}.xlsx`
+    
+    // Save the file
+    XLSX.writeFile(workbook, filename)
+    
+    toast.success(`Exported ${exportData.length} installment plans to ${filename}`)
+  } catch (error) {
+    console.error('Export error:', error)
+    toast.error('Failed to export installment data')
+  }
 }
 
 // Lifecycle

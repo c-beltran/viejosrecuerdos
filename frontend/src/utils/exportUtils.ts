@@ -67,8 +67,8 @@ export function exportInventoryToExcel(
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory')
     
     // Generate filename with timestamp
-    const timestamp = new Date().toISOString().split('T')[0]
-    const fullFilename = `${filename}-${timestamp}.xlsx`
+    const currentDate = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const fullFilename = `${filename}-${currentDate}.xlsx`
     
     // Save file
     XLSX.writeFile(workbook, fullFilename)
@@ -116,14 +116,14 @@ export function exportFilteredInventoryToExcel(
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Filtered Inventory')
     
     // Generate filename with timestamp and filter info
-    const timestamp = new Date().toISOString().split('T')[0]
+    const currentDate = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
     let filterSuffix = ''
     
     if (filters.category) filterSuffix += `-${filters.category}`
     if (filters.status) filterSuffix += `-${filters.status}`
     if (filters.search) filterSuffix += `-search`
     
-    const fullFilename = `${filename}${filterSuffix}-${timestamp}.xlsx`
+    const fullFilename = `${filename}${filterSuffix}-${currentDate}.xlsx`
     
     // Save file
     XLSX.writeFile(workbook, fullFilename)

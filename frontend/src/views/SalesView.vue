@@ -13,6 +13,14 @@
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
           <button
+            @click="exportSales"
+            class="btn-secondary flex items-center gap-2"
+            title="Export to Excel"
+          >
+            <Download class="w-4 h-4" />
+            Export
+          </button>
+          <button
             @click="openSalesForm()"
             class="btn-primary flex items-center gap-2"
           >
@@ -354,6 +362,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useSalesStore } from '@/stores/sales'
 import { useInventoryStore } from '@/stores/inventory'
+import * as XLSX from 'xlsx'
 import { 
   ShoppingCart, 
   Plus, 
@@ -363,7 +372,8 @@ import {
   CheckCircle,
   BarChart3,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  Download
 } from 'lucide-vue-next'
 import type { Sale, SaleFilters } from '@/types'
 
@@ -692,6 +702,94 @@ const getTotalOutstandingAmount = () => {
     }
     return total
   }, 0)
+}
+
+const exportSales = async () => {
+  try {
+    // Get all sales data
+    const allSales = salesStore.getSales
+    
+    if (!allSales || allSales.length === 0) {
+      toast.error('No sales data to export')
+      return
+    }
+    
+    // Prepare data for export
+    const exportData = allSales.map(sale => {
+      const installmentPlan = getInstallmentPlanForSale(sale.saleId)
+      const amountPaid = getAmountPaidForSale(sale.saleId)
+      const remainingAmount = getRemainingAmountForSale(sale.saleId)
+      
+      return {
+        'Sale ID': sale.saleId,
+        'Date': formatDate(sale.saleDate),
+        'Client': sale.client?.name || 'N/A',
+        'Client Email': sale.client?.email || 'N/A',
+        'Client Phone': sale.client?.phone || 'N/A',
+        'Total Amount': `$${formatCurrency(sale.totalAmount)}`,
+        'Payment Method': sale.paymentMethod,
+        'Status': sale.status,
+        'Notes': sale.notes || 'N/A',
+        'Items Count': sale.items?.length || 0,
+        'Is Installment': isInstallmentSale(sale.saleId) ? 'Yes' : 'No',
+        'Down Payment': installmentPlan ? `$${formatCurrency(installmentPlan.downPayment || 0)}` : 'N/A',
+        'Amount Paid': `$${formatCurrency(amountPaid)}`,
+        'Remaining Amount': `$${formatCurrency(remainingAmount)}`,
+        'Installment Status': installmentPlan ? getEffectiveStatus(installmentPlan) : 'N/A',
+        'Created Date': formatDate(sale.createdAt),
+        'Updated Date': formatDate(sale.updatedAt)
+      }
+    })
+    
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new()
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 15 }, // Sale ID
+      { wch: 12 }, // Date
+      { wch: 20 }, // Client
+      { wch: 25 }, // Client Email
+      { wch: 15 }, // Client Phone
+      { wch: 15 }, // Total Amount
+      { wch: 15 }, // Payment Method
+      { wch: 12 }, // Status
+      { wch: 30 }, // Notes
+      { wch: 12 }, // Items Count
+      { wch: 15 }, // Is Installment
+      { wch: 15 }, // Down Payment
+      { wch: 15 }, // Amount Paid
+      { wch: 15 }, // Remaining Amount
+      { wch: 18 }, // Installment Status
+      { wch: 15 }, // Created Date
+      { wch: 15 }  // Updated Date
+    ]
+    worksheet['!cols'] = columnWidths
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales Data')
+    
+    // Generate filename with current date
+    const currentDate = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const filename = `sales_export_${currentDate}.xlsx`
+    
+    // Save the file
+    XLSX.writeFile(workbook, filename)
+    
+    toast.success(`Exported ${exportData.length} sales to ${filename}`)
+  } catch (error) {
+    console.error('Export error:', error)
+    toast.error('Failed to export sales data')
+  }
+}
+
+// Helper function for installment status
+const getEffectiveStatus = (plan: any) => {
+  if (!plan) return 'N/A'
+  const amountPaid = getAmountPaidForSale(plan.saleId)
+  const totalAmount = plan.totalAmount || 0
+  return amountPaid >= totalAmount ? 'Completed' : plan.status || 'Active'
 }
 
 // Watchers

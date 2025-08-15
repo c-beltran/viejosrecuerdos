@@ -4,12 +4,7 @@ const supabase = require('../utils/supabaseClient');
  * Create a new sale (single or multiple items)
  */
 const createSale = async (saleData, userId) => {
-  try {
-    console.log('=== Backend createSale called ===')
-    console.log('Received saleData:', saleData)
-    console.log('Sale date from request:', saleData.saleDate)
-    console.log('User ID:', userId)
-    
+  try {    
     const { items, clientId, paymentMethod, notes } = saleData;
 
     // Validate items
@@ -66,10 +61,6 @@ const createSale = async (saleData, userId) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
-    console.log('=== Sale Record being sent to database ===')
-    console.log('Sale record:', saleRecord)
-    console.log('Sale date being sent:', saleRecord.saleDate)
 
     const { data: sale, error: saleError } = await supabase
       .from('sales')
@@ -407,12 +398,7 @@ const getSalesStats = async (filters = {}) => {
  * Update sale details
  */
 const updateSale = async (saleId, updateData, userId) => {
-  try {
-    console.log('=== Backend updateSale called ===')
-    console.log('Sale ID:', saleId)
-    console.log('Update data:', updateData)
-    console.log('User ID:', userId)
-    
+  try {   
     // Validate required fields
     if (!saleId) {
       throw new Error('Sale ID is required')
@@ -440,8 +426,6 @@ const updateSale = async (saleId, updateData, userId) => {
       }
     })
     
-    console.log('Allowed updates:', allowedUpdates)
-    
     // Update the sale record
     const { data: updatedSale, error: updateError } = await supabase
       .from('sales')
@@ -453,8 +437,6 @@ const updateSale = async (saleId, updateData, userId) => {
     if (updateError) {
       throw new Error(`Failed to update sale: ${updateError.message}`)
     }
-    
-    console.log('Sale updated successfully:', updatedSale)
     
     // If items were updated, we need to handle them separately
     if (updateData.items && Array.isArray(updateData.items)) {
@@ -487,7 +469,7 @@ const updateSale = async (saleId, updateData, userId) => {
         throw new Error(`Failed to create new sale items: ${itemsError.message}`)
       }
       
-      console.log('Sale items updated successfully:', createdItems)
+
     }
     
     // Get the complete updated sale with items
