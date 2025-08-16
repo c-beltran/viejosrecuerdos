@@ -250,84 +250,9 @@ const getItemByQR = async (req, res) => {
   }
 };
 
-/**
- * @swagger
- * /qr/{itemId}/data:
- *   get:
- *     summary: Get item data for frontend API calls
- *     description: Returns JSON data for an item (used by frontend components)
- *     tags: [QR Codes]
- *     parameters:
- *       - in: path
- *         name: itemId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Unique identifier of the inventory item
- *     responses:
- *       200:
- *         description: Item details (read-only)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/Inventory'
- *       404:
- *         description: Item not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-const getItemData = async (req, res) => {
-  try {
-    const { itemId } = req.params;
-    
-    const result = await inventoryService.getItemById(itemId);
-    
-    if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        error: 'Item not found'
-      });
-    }
 
-    // Return read-only item data (no sensitive information)
-    const publicItem = {
-      itemId: result.data.itemId,
-      itemName: result.data.itemName,
-      descripcionArticulo: result.data.descripcionArticulo,
-      category: result.data.category,
-      unitPrice: result.data.unitPrice,
-      status: result.data.status,
-      imageUrls: result.data.imageUrls
-    };
-
-    res.status(200).json({
-      success: true,
-      data: publicItem
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
 
 module.exports = {
   getQRCode,
-  getItemByQR,
-  getItemData
+  getItemByQR
 }; 
