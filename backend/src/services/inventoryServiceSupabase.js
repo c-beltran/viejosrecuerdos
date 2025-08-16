@@ -108,13 +108,6 @@ const getItemById = async (itemId) => {
     // Generate QR code URL on-demand
     const qrCodeUrl = generateQRCodeUrl(itemId);
     
-    // Debug logging
-    console.log('Backend - Raw data from database:', {
-      createDate: data.createDate,
-      updatedDate: data.updatedDate,
-      itemId: data.itemId
-    });
-    
     // Map database column names to frontend expected names
     const mappedItem = {
       ...data,
@@ -123,11 +116,6 @@ const getItemById = async (itemId) => {
       createdAt: data.createDate,
       updatedAt: data.updatedDate
     };
-    
-    console.log('Backend - Mapped item:', {
-      createdAt: mappedItem.createdAt,
-      updatedAt: mappedItem.updatedAt
-    });
 
     return {
       success: true,

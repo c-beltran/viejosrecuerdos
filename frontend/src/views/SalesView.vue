@@ -118,7 +118,6 @@
               @change="applyFilters"
               class="w-full px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
             >
-              <option value="" disabled>Select Status</option>
               <option value="">All Statuses</option>
               <option value="Pending">Pending</option>
               <option value="Completed">Completed</option>
@@ -135,7 +134,6 @@
               @change="applyFilters"
               class="w-full px-3 py-3 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white"
             >
-              <option value="" disabled>Select Payment Method</option>
               <option value="">All Payment Methods</option>
               <option value="Cash">Cash</option>
               <option value="Credit Card">Credit Card</option>
@@ -155,7 +153,7 @@
                   type="date"
                   @change="applyFilters"
                   class="w-full px-3 py-3 pr-8 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white text-sm"
-                  :placeholder="getDefaultStartDate()"
+                  placeholder="Start Date"
                 />
                 <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-vintage-gray">
                   From
@@ -167,7 +165,7 @@
                   type="date"
                   @change="applyFilters"
                   class="w-full px-3 py-3 pr-8 border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent bg-white text-sm"
-                  :placeholder="getDefaultEndDate()"
+                  placeholder="End Date"
                 />
                 <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-vintage-gray">
                   To
@@ -177,12 +175,12 @@
           </div>
 
           <!-- Clear Filters -->
-          <div class="w-full sm:col-span-2 lg:col-span-1 flex items-end">
+          <div v-if="hasActiveFilters" class="w-full sm:col-span-2 lg:col-span-1 flex items-end">
             <button
-              @click="clearFilters"
+              @click="clearAllFilters"
               class="w-full btn-secondary px-4 py-3"
             >
-              Clear Filters
+              Clear All Filters
             </button>
           </div>
         </div>
@@ -377,17 +375,9 @@ import {
 } from 'lucide-vue-next'
 import type { Sale, SaleFilters } from '@/types'
 
-// Helper functions for default date values
-const getDefaultStartDate = () => {
-  // Default to 30 days ago
-  const date = new Date()
-  date.setDate(date.getDate() - 30)
+// Helper functions for date formatting (no default values)
+const formatDateForFilter = (date: Date) => {
   return date.toISOString().split('T')[0]
-}
-
-const getDefaultEndDate = () => {
-  // Default to today
-  return new Date().toISOString().split('T')[0]
 }
 
 // Composables
@@ -409,12 +399,12 @@ const salesStats = ref({
   averageSaleValue: 0
 })
 
-// Filters
+// Filters - start with no filters applied
 const filters = ref<SaleFilters>({
   status: undefined,
   paymentMethod: undefined,
-  startDate: getDefaultStartDate(), // Set default start date (30 days ago)
-  endDate: getDefaultEndDate(), // Set default end date (today)
+  startDate: undefined, // No default start date
+  endDate: undefined, // No default end date
   limit: 20,
   offset: 0
 })
@@ -791,6 +781,32 @@ const getEffectiveStatus = (plan: any) => {
   const totalAmount = plan.totalAmount || 0
   return amountPaid >= totalAmount ? 'Completed' : plan.status || 'Active'
 }
+
+// Clear all filters and reset to default state
+const clearAllFilters = () => {
+  filters.value = {
+    status: undefined,
+    paymentMethod: undefined,
+    startDate: undefined,
+    endDate: undefined,
+    limit: 20,
+    offset: 0
+  }
+  searchQuery.value = ''
+  currentPage.value = 1
+  toast.success('All filters cleared')
+}
+
+// Check if any filters are currently applied
+const hasActiveFilters = computed(() => {
+  return !!(
+    filters.value.status ||
+    filters.value.paymentMethod ||
+    filters.value.startDate ||
+    filters.value.endDate ||
+    searchQuery.value.trim()
+  )
+})
 
 // Watchers
 watch(searchQuery, () => {

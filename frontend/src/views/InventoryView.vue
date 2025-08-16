@@ -67,6 +67,54 @@
       </div>
     </div>
 
+     <!-- Stats Cards -->
+     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="card-antique p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+            <Package class="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <p class="text-sm text-vintage-gray">Total Items</p>
+            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.totalItems }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-antique p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+            <CheckCircle class="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <p class="text-sm text-vintage-gray">Available</p>
+            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.availableItems }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-antique p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+            <XCircle class="w-5 h-5 text-red-600" />
+          </div>
+          <div>
+            <p class="text-sm text-vintage-gray">Sold Out</p>
+            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.soldOutItems }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-antique p-4">
+        <div class="flex items-center">
+          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+            <AlertTriangle class="w-5 h-5 text-yellow-600" />
+          </div>
+          <div>
+            <p class="text-sm text-vintage-gray">Low Stock</p>
+            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.lowStockItems }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Search and Filters -->
     <div class="card-antique p-6 mb-6">
       <!-- Search Bar -->
@@ -187,54 +235,6 @@
         <span class="text-sm text-vintage-gray">
           {{ filteredItems.length }} of {{ totalItems }} items
         </span>
-      </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <div class="card-antique p-4">
-        <div class="flex items-center">
-          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-            <Package class="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <p class="text-sm text-vintage-gray">Total Items</p>
-            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.totalItems }}</p>
-          </div>
-        </div>
-      </div>
-      <div class="card-antique p-4">
-        <div class="flex items-center">
-          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-            <CheckCircle class="w-5 h-5 text-green-600" />
-          </div>
-          <div>
-            <p class="text-sm text-vintage-gray">Available</p>
-            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.availableItems }}</p>
-          </div>
-        </div>
-      </div>
-      <div class="card-antique p-4">
-        <div class="flex items-center">
-          <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-            <XCircle class="w-5 h-5 text-red-600" />
-          </div>
-          <div>
-            <p class="text-sm text-vintage-gray">Sold Out</p>
-            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.soldOutItems }}</p>
-          </div>
-        </div>
-      </div>
-      <div class="card-antique p-4">
-        <div class="flex items-center">
-          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
-            <AlertTriangle class="w-5 h-5 text-yellow-600" />
-          </div>
-          <div>
-            <p class="text-sm text-vintage-gray">Low Stock</p>
-            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.lowStockItems }}</p>
-          </div>
-        </div>
       </div>
     </div>
 

@@ -579,7 +579,20 @@ const getNewRemaining = () => {
 const isPlanCompleted = (plan: InstallmentPlan) => {
   const totalPaid = getAmountPaid(plan.planId)
   const totalAmount = plan.totalAmount || 0
-  return totalPaid >= totalAmount
+  const isCompleted = totalPaid >= totalAmount
+  
+  // Debug logging for completed plans
+  if (isCompleted) {
+    console.log('Plan completed:', {
+      planId: plan.planId,
+      totalAmount,
+      totalPaid,
+      downPayment: plan.downPayment,
+      additionalPayments: totalPaid - (plan.downPayment || 0)
+    })
+  }
+  
+  return isCompleted
 }
 
 // Get the effective status for display (auto-update to Completed if fully paid)
@@ -593,9 +606,11 @@ const getEffectiveStatus = (plan: InstallmentPlan) => {
 const filteredInstallmentPlans = computed(() => {
   if (!statusFilter.value) return installmentPlans.value
   
-  return installmentPlans.value.filter(plan => 
-    plan.status === statusFilter.value
-  )
+  return installmentPlans.value.filter(plan => {
+    // Use effective status for filtering to include completed plans
+    const effectiveStatus = getEffectiveStatus(plan)
+    return effectiveStatus === statusFilter.value
+  })
 })
 
 // Methods

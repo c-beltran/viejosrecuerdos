@@ -140,6 +140,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/qr/:id',
+      name: 'public-qr',
+      component: () => import('./views/PublicQRView.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: NotFoundView
