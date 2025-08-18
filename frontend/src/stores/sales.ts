@@ -7,11 +7,11 @@ import {
   SaleFilters,
   InstallmentPlan,
   InstallmentPayment,
-  CreateInstallmentPlanRequest,
-  CreatePaymentRequest,
   LoadingState,
   PaginationState,
-  SaleCreationResponse
+  SaleCreationResponse,
+  CreateInstallmentPlanRequest,
+  CreatePaymentRequest
 } from '@/types'
 import ApiService from '@/utils/api'
 
@@ -142,17 +142,13 @@ export const useSalesStore = defineStore('sales', () => {
       
       if (response.success && response.data) {
         // Handle different response structures
-        let saleData = response.data
-        
-        // Check if the response has a nested 'sale' property
-        if (response.data.sale && response.data.sale.saleId) {
-          saleData = response.data.sale
-          console.log('Using nested sale data:', saleData)
-        }
+        // The response.data should be a SaleCreationResponse
+        const saleCreationResponse = response.data as SaleCreationResponse
+        const saleData = saleCreationResponse.sale
         
         // Validate the sale data
         if (!saleData.saleId) {
-          console.error('Invalid sale response: missing saleId', response.data)
+          console.error('Invalid sale response: missing saleId', saleData)
           throw new Error('Invalid sale response from server')
         }
         
@@ -167,7 +163,7 @@ export const useSalesStore = defineStore('sales', () => {
           status: saleData.status || 'Pending',
           notes: saleData.notes,
           createdBy: saleData.createdBy || 'system',
-          items: saleData.items || response.data.items || [],
+          items: saleData.items || saleCreationResponse.items || [],
           createdAt: saleData.createdAt || new Date().toISOString(),
           updatedAt: saleData.updatedAt || new Date().toISOString()
         }
@@ -438,7 +434,6 @@ export const useSalesStore = defineStore('sales', () => {
         throw new Error(response.error || 'Failed to fetch installment plan summary')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch installment plan summary'
       throw err
     }
   }

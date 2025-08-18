@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
-import Toast, { type PluginOptions } from 'vue-toastification'
+import Toast, { type PluginOptions, POSITION } from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 
 import App from './App.vue'
@@ -9,9 +9,6 @@ import './style.css'
 
 // Import stores
 import { useAuthStore } from './stores/auth'
-import { useInventoryStore } from './stores/inventory'
-import { useClientStore } from './stores/client'
-import { useSalesStore } from './stores/sales'
 
 // Import views
 import LoginView from './views/LoginView.vue'
@@ -149,7 +146,7 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
   // If auth is still loading, wait for it to complete with timeout
@@ -159,7 +156,7 @@ router.beforeEach(async (to, from, next) => {
       // Wait for auth to initialize with timeout
       await Promise.race([
         new Promise(resolve => {
-          const unwatch = authStore.$subscribe((mutation, state) => {
+          const unwatch = authStore.$subscribe((_mutation, state) => {
             if (!state.isLoading) {
               unwatch()
               resolve(true)
@@ -195,7 +192,7 @@ const app = createApp(App)
 
 // Toast configuration
 const toastOptions: PluginOptions = {
-  position: 'top-right',
+  position: POSITION.TOP_RIGHT,
   timeout: 5000,
   closeOnClick: true,
   pauseOnFocusLoss: true,

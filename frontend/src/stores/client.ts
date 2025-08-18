@@ -156,7 +156,6 @@ export const useClientStore = defineStore('client', () => {
         throw new Error(response.error || 'Failed to update client')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update client'
       throw err
     } finally {
       setLoading(false)
@@ -183,7 +182,6 @@ export const useClientStore = defineStore('client', () => {
         throw new Error(response.error || 'Failed to delete client')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete client'
       throw err
     } finally {
       setLoading(false)

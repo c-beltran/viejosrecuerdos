@@ -184,7 +184,7 @@ const createItem = async (itemData, userId) => {
     };
 
     const { data, error } = await supabase
-      .from("inventory")
+      .from('inventory')
       .insert([newItem])
       .select()
       .single();
@@ -200,7 +200,10 @@ const createItem = async (itemData, userId) => {
       updatedAt: data.updatedDate
     };
 
-    return mappedItem;
+    return {
+      success: true,
+      data: mappedItem
+    };
   } catch (error) {
     return {
       success: false,
@@ -208,6 +211,7 @@ const createItem = async (itemData, userId) => {
     };
   }
 };
+
 /**
  * Update an inventory item
  */

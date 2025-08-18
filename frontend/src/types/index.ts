@@ -208,6 +208,28 @@ export interface InstallmentPayment {
 
 export type PaymentStatus = 'Pending' | 'Completed' | 'Failed' | 'Refunded';
 
+// Request types for installment operations
+export interface CreateInstallmentPlanRequest {
+  saleId: string;
+  totalAmount: number;
+  downPayment: number;
+  installmentAmount: number;
+  numberOfInstallments: number;
+  installmentFrequency: InstallmentFrequency;
+  startDate: string;
+  dueDate: string;
+  notes?: string;
+}
+
+export interface CreatePaymentRequest {
+  planId: string;
+  paymentNumber: number;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+}
+
 // API Response types
 export interface ApiResponse<T = any> {
   success: boolean;

@@ -180,7 +180,7 @@ export class ApiService {
   ): Promise<ApiResponse<T>> {
     try {
       const formData = new FormData()
-      files.forEach((file, index) => {
+      files.forEach((file) => {
         formData.append(`images`, file)
       })
       

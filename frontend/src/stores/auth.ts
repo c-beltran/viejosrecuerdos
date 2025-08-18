@@ -148,7 +148,8 @@ export const useAuthStore = defineStore('auth', () => {
         .eq('user_id', userId)
         .single()
       
-      const { data, error: profileError } = await Promise.race([profilePromise, timeoutPromise])
+      const result = await Promise.race([profilePromise, timeoutPromise])
+      const { data, error: profileError } = result as any
       
       if (profileError) {
         console.error('Profile error:', profileError)

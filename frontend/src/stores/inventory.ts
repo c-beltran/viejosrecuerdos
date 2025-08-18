@@ -5,8 +5,6 @@ import {
   CreateInventoryItemRequest, 
   UpdateInventoryItemRequest, 
   InventoryFilters,
-  ApiResponse,
-  PaginatedResponse,
   LoadingState,
   PaginationState
 } from '@/types'
@@ -75,16 +73,11 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.get<InventoryItem[]>(url)
       
       if (response.success && response.data) {
-        // Handle nested data structure
-        const itemsData = response.data.data || response.data
-        items.value = itemsData
+        items.value = response.data
         
         // Update pagination info from response
         if (response.count !== undefined) {
           pagination.value.total = response.count
-        }
-        if (response.total !== undefined) {
-          pagination.value.total = response.total
         }
       } else {
         throw new Error(response.error || 'Failed to fetch inventory items')
@@ -110,10 +103,8 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.get<InventoryItem>(`/inventory/item/${itemId}`)
       
       if (response.success && response.data) {
-        // Handle nested data structure
-        const itemData = response.data.data || response.data
-        currentItem.value = itemData
-        return itemData
+        currentItem.value = response.data
+        return response.data
       } else {
         throw new Error(response.error || 'Failed to fetch inventory item')
       }
@@ -138,11 +129,8 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.get<InventoryItem>(`/inventory/friendly/${friendlyId}`)
       
       if (response.success && response.data) {
-        // Handle nested data structure
-        const itemData = response.data.data || response.data
-        currentItem.value = itemData
-
-        return itemData
+        currentItem.value = response.data
+        return response.data
       } else {
         throw new Error(response.error || 'Failed to fetch inventory item')
       }
@@ -174,11 +162,8 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.get<InventoryItem[]>(url)
       
       if (response.success && response.data) {
-        // Handle nested data structure
-        const itemsData = response.data.data || response.data
-        
         // Filter to only include items with currentQuantity > 0
-        const availableItems = itemsData.filter(item => item.currentQuantity > 0)
+        const availableItems = response.data.filter((item: InventoryItem) => item.currentQuantity > 0)
         
         // Store these items separately for sales use
         items.value = availableItems
@@ -206,12 +191,9 @@ export const useInventoryStore = defineStore('inventory', () => {
       const response = await ApiService.post<InventoryItem>('/inventory', itemData)
       
       if (response.success && response.data) {
-
-        // Handle nested data structure
-        const itemData = response.data.data || response.data
-        items.value.unshift(itemData)
+        items.value.unshift(response.data)
         pagination.value.total += 1
-        return itemData
+        return response.data
       } else {
         throw new Error(response.error || 'Failed to create inventory item')
       }
@@ -320,9 +302,8 @@ export const useInventoryStore = defineStore('inventory', () => {
 
       
       if (response.success && response.data) {
-        // Extract image data from the new simplified response structure
-        const imageData = response.data.image || response.data
-        return imageData
+        // Extract image data from the response
+        return response.data
       } else {
         throw new Error(response.error || 'Failed to upload image to S3')
       }
@@ -340,7 +321,7 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   // Delete image from inventory item
-  const deleteImage = async (itemId: string, imageUrl: string) => {
+  const deleteImage = async (_itemId: string, _imageUrl: string) => {
     try {
       setLoading(true)
       
@@ -358,7 +339,7 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   // Generate QR code for inventory item
-  const generateQRCode = async (itemId: string) => {
+  const generateQRCode = async (_itemId: string) => {
     try {
       setLoading(true)
       
@@ -410,7 +391,6 @@ export const useInventoryStore = defineStore('inventory', () => {
         throw new Error(response.error || 'Failed to fetch categories')
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch categories'
       throw err
     }
   }
