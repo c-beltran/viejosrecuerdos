@@ -339,17 +339,24 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   // Generate QR code for inventory item
-  const generateQRCode = async (_itemId: string) => {
+  const generateQRCode = async (itemId: string) => {
     try {
       setLoading(true)
       
-      // TODO: Implement QR code generation endpoint in backend
-
+      // Call the backend to generate the QR code image
+      const response = await ApiService.get(`/qr/${itemId}?format=png&size=200`, {
+        responseType: 'blob'
+      })
       
-      // Mock QR code URL for now
-      const mockQRCodeUrl = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==`
-      
-      return { qrCodeUrl: mockQRCodeUrl }
+      if (response.success) {
+        // Create a blob URL from the response
+        const blob = new Blob([response.data as BlobPart], { type: 'image/png' })
+        const qrCodeUrl = URL.createObjectURL(blob)
+        
+        return { qrCodeUrl }
+      } else {
+        throw new Error(response.error || 'Failed to generate QR code')
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate QR code'
       setLoading(false, errorMessage)

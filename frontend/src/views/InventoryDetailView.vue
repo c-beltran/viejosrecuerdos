@@ -41,7 +41,7 @@
         <p class="text-vintage-gray">View and manage your antique item</p>
       </div>
       <div class="flex items-center space-x-3">
-        <button 
+        <!-- <button 
           @click="generateQRCode" 
           class="btn-antique-secondary"
           :disabled="isGeneratingQR"
@@ -49,7 +49,7 @@
           <QrCode v-if="!isGeneratingQR" class="w-4 h-4 mr-2" />
           <div v-else class="loading-spinner w-4 h-4 mr-2"></div>
           {{ isGeneratingQR ? 'Generating...' : 'Generate QR' }}
-        </button>
+        </button> -->
         <button 
           @click="router.push(`/inventory/${itemId}/edit`)" 
           class="btn-antique-secondary"
@@ -237,15 +237,34 @@
       <!-- Sidebar -->
       <div class="space-y-6">
         <!-- QR Code -->
-        <div v-if="item.qrCodeUrl" class="card-antique p-6">
+        <div class="card-antique p-6">
           <h2 class="font-display text-xl text-vintage-charcoal mb-4">QR Code</h2>
           <div class="text-center">
+            <!-- Generate QR button -->
+            <button 
+              v-if="!item?.qrCodeUrl"
+              @click="generateQRCode"
+              :disabled="isGeneratingQR"
+              class="btn-antique w-full mb-4"
+            >
+              <QrCode v-if="!isGeneratingQR" class="w-4 h-4 mr-2" />
+              <div v-else class="loading-spinner w-4 h-4 mr-2"></div>
+              {{ isGeneratingQR ? 'Generating...' : 'Generate QR Code' }}
+            </button>
+            
+            <!-- QR Code Image -->
             <img 
+              v-if="item?.qrCodeUrl"
               :src="item.qrCodeUrl" 
               :alt="`QR Code for ${item.itemName}`"
               class="w-48 h-48 mx-auto mb-4"
+              @error="handleImageError"
+              @load="handleImageLoad"
             />
+            
+            <!-- Download button -->
             <button 
+              v-if="item?.qrCodeUrl"
               @click="downloadQRCode"
               class="btn-antique-secondary w-full"
             >
@@ -362,9 +381,7 @@ const loadItem = async () => {
       console.log('Frontend - Item set in component:', item.value)
       console.log('Frontend - Date fields:', {
         createdAt: item.value.createdAt,
-        updatedAt: item.value.updatedAt,
-        createDate: item.value.createDate,
-        updatedDate: item.value.updatedDate
+        updatedAt: item.value.updatedAt
       })
     } else {
       error.value = 'Item not found'
@@ -396,12 +413,18 @@ const generateQRCode = async () => {
   if (!item.value) return
 
   try {
-    isGeneratingQR.value = true
-    await inventoryStore.generateQRCode(item.value.itemId)
-    toast.success('QR code generated successfully')
-    // Reload item to get the new QR code URL
-    await loadItem()
+    isGeneratingQR.value = true 
+    const result = await inventoryStore.generateQRCode(item.value.itemId)
+
+    
+    if (result && result.qrCodeUrl) {
+      toast.success('QR code generated successfully')
+    } else {
+      console.error('No QR code URL in result:', result)
+      toast.error('Failed to generate QR code URL')
+    }
   } catch (err) {
+    console.error('QR code generation error:', err)
     toast.error('Failed to generate QR code')
   } finally {
     isGeneratingQR.value = false
@@ -417,6 +440,18 @@ const downloadQRCode = () => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+}
+
+const handleImageError = (event: Event) => {
+  console.error('QR code image failed to load:', event)
+  const target = event.target as HTMLImageElement
+  console.error('Image src that failed:', target.src)
+}
+
+const handleImageLoad = (event: Event) => {
+  console.log('QR code image loaded successfully:', event)
+  const target = event.target as HTMLImageElement
+  console.log('Image src that loaded:', target.src)
 }
 
 const deleteItem = () => {

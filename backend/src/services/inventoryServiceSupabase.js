@@ -56,14 +56,6 @@ const getAllItems = async (filters = {}) => {
         updatedAt: item.updatedDate
       };
       
-      // Debug logging for first item
-      if (item === items[0]) {
-        console.log('Backend - First item mapping:', {
-          original: { createDate: item.createDate, updatedDate: item.updatedDate },
-          mapped: { createdAt: mappedItem.createdAt, updatedAt: mappedItem.updatedAt }
-        });
-      }
-      
       return mappedItem;
     });
 
@@ -84,7 +76,7 @@ const getAllItems = async (filters = {}) => {
  * Generate QR code URL for an item
  */
 const generateQRCodeUrl = (itemId) => {
-  return `${process.env.FRONTEND_URL || 'http://localhost:8000'}/api/qr/${itemId}`;
+  return `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/qr/${itemId}`;
 };
 
 /**

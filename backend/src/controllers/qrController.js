@@ -67,12 +67,9 @@ const getQRCode = async (req, res) => {
       });
     }
 
-    // Generate QR code URL - now points to frontend public view
-    const qrCodeUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/qr/${itemId}`;
-    
     // Generate QR code based on format
     if (format === 'svg') {
-      const svg = await QRCode.toString(qrCodeUrl, {
+      const svg = await QRCode.toString(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/qr/${itemId}/view`, {
         type: 'svg',
         width: size,
         margin: 2
@@ -82,7 +79,7 @@ const getQRCode = async (req, res) => {
       res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
       return res.send(svg);
     } else if (format === 'pdf') {
-      const pdf = await QRCode.toFile(qrCodeUrl, {
+      const pdf = await QRCode.toFile(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/qr/${itemId}/view`, {
         type: 'pdf',
         width: size,
         margin: 2
@@ -93,7 +90,7 @@ const getQRCode = async (req, res) => {
       return res.send(pdf);
     } else {
       // Default PNG format
-      const pngBuffer = await QRCode.toBuffer(qrCodeUrl, {
+      const pngBuffer = await QRCode.toBuffer(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/qr/${itemId}/view`, {
         type: 'png',
         width: size,
         margin: 2

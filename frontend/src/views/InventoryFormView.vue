@@ -409,7 +409,8 @@ const loadItem = async () => {
         unitPrice: fetchedItem.unitPrice,
         status: fetchedItem.status || 'Available', // Load existing status or default to Available
         internalNotes: fetchedItem.internalNotes || '',
-        imageUrls: getValidImages(fetchedItem.imageUrls) || []
+        imageUrls: getValidImages(fetchedItem.imageUrls) || [],
+        pendingImages: [] // Initialize pendingImages for editing
       }
     }
   } catch (err) {
@@ -553,43 +554,80 @@ const uploadImage = async (file: File) => {
       return
     }
 
-    // For editing existing items, upload immediately
-    console.log('Processing as EXISTING ITEM - uploading immediately')
-    console.log('Uploading image for existing item, itemId:', itemId.value)
+    // For editing existing items, also queue as pending (same as new items)
+    console.log('Processing as EXISTING ITEM - storing file for later upload')
+    // Store file for later upload (same logic as new items)
+    if (!form.value.pendingImages) {
+      form.value.pendingImages = []
+    }
+    form.value.pendingImages.push(file)
+    console.log('Added pending image for update:', file.name, 'Total pending:', form.value.pendingImages.length)
     
-    const imageData = await inventoryStore.uploadImage(file, itemId.value, (progress) => {
-      console.log(`Real upload progress for ${file.name}: ${progress}%`)
-      progressItem.progress = progress
+    // Force reactivity update
+    form.value.pendingImages = [...form.value.pendingImages]
+    
+    // Show realistic progress simulation for pending uploads (same as new items)
+    let progress = 0
+    const progressInterval = setInterval(async () => {
+      if (progress < 85) {
+        // Simulate realistic upload progress (slower at start, faster in middle)
+        if (progress < 30) {
+          progress += 2 // Slow start
+        } else if (progress < 70) {
+          progress += 4 // Faster middle
+        } else {
+          progress += 1 // Slow finish
+        }
+        
+        // Update progress and force reactivity
+        progressItem.progress = progress
+        progressItem.status = 'uploading'
+        
+        // Force Vue to detect the change by updating the array
+        const index = uploadProgress.value.findIndex(p => p.fileName === file.name)
+        if (index > -1) {
+          uploadProgress.value[index] = { ...progressItem }
+          // Force reactivity update
+          uploadProgress.value = [...uploadProgress.value]
+        }
+        
+        // Wait for next tick to ensure DOM updates
+        await nextTick()
+        console.log(`Progress update for ${file.name}: ${progress}%`)
+      }
+    }, 150) // Realistic timing
+    
+    // Complete the progress after a realistic duration
+    setTimeout(async () => {
+      clearInterval(progressInterval)
+      progressItem.progress = 100
+      progressItem.status = 'completed'
       
-      // Force reactivity update for progress
+      // Force final reactivity update
       const index = uploadProgress.value.findIndex(p => p.fileName === file.name)
       if (index > -1) {
         uploadProgress.value[index] = { ...progressItem }
+        // Force reactivity update
         uploadProgress.value = [...uploadProgress.value]
       }
-    })
-
-    console.log('Upload completed, imageData:', imageData)
+      
+      // Wait for next tick to ensure DOM updates
+      await nextTick()
+      console.log(`Progress completed for ${file.name}: 100%`)
+      
+      // Remove progress item after a delay
+      setTimeout(() => {
+        const removeIndex = uploadProgress.value.findIndex(p => p.fileName === file.name)
+        if (removeIndex > -1) {
+          uploadProgress.value.splice(removeIndex, 1)
+        }
+      }, 2000)
+    }, 3000) // Realistic upload duration
     
-    progressItem.progress = 100
-    progressItem.status = 'completed'
-
-    // Add the uploaded image to the form
-    if (imageData) {
-      console.log('About to add imageData to form:', imageData)
-      console.log('Current form.imageUrls before adding:', form.value.imageUrls)
-      form.value.imageUrls.push(imageData)
-      console.log('Current form.imageUrls after adding:', form.value.imageUrls)
-      console.log('Added image to form, total images:', form.value.imageUrls.length)
-    }
+    toast.info(`${file.name} will be uploaded after item update`)
     
-    // Remove progress item after a delay
-    setTimeout(() => {
-      const index = uploadProgress.value.findIndex(p => p.fileName === file.name)
-      if (index > -1) {
-        uploadProgress.value.splice(index, 1)
-      }
-    }, 2000)
+    // The image will now show up in the gallery since we added it to pendingImages
+    return
 
   } catch (err) {
     console.error('Upload error:', err)
@@ -662,7 +700,39 @@ const handleSubmit = async () => {
         imageUrls: form.value.imageUrls
       }
       
+      // Update the item first
       await inventoryStore.updateItem(itemId.value, updateData)
+      
+      // Upload pending images if any
+      if (form.value.pendingImages && form.value.pendingImages.length > 0) {
+        console.log('Uploading pending images for update:', form.value.pendingImages.length)
+        
+        for (const file of form.value.pendingImages) {
+          try {
+            const uploadResponse = await inventoryStore.uploadImage(file, itemId.value)
+            console.log('Image upload response for update:', uploadResponse)
+            
+            // Extract just the image data from the response
+            const imageData = uploadResponse.image || uploadResponse
+            console.log('Extracted image data for update:', imageData)
+            
+            // Add the uploaded image to the item's imageUrls
+            const updatedImageUrls = [...(form.value.imageUrls || []), imageData]
+            
+            // Update the item with the new image
+            await inventoryStore.updateItem(itemId.value, {
+              ...updateData,
+              imageUrls: updatedImageUrls
+            })
+            
+            toast.success(`Image ${file.name} uploaded successfully`)
+          } catch (err) {
+            console.error('Failed to upload image for update:', file.name, err)
+            toast.error(`Failed to upload ${file.name}`)
+          }
+        }
+      }
+      
       toast.success('Item updated successfully')
     } else {
       const createData: CreateInventoryItemRequest = {
