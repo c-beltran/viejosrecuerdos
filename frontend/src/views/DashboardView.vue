@@ -102,7 +102,7 @@
               <p class="text-sm text-vintage-gray">{{ formatDate(sale.saleDate) }}</p>
             </div>
             <div class="text-right">
-              <p class="font-medium text-vintage-charcoal">${{ sale.totalAmount.toFixed(2) }}</p>
+              <p class="font-medium text-vintage-charcoal">${{ sale.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
               <span :class="getStatusBadgeClass(sale.status)">{{ sale.status }}</span>
             </div>
           </div>
@@ -137,7 +137,7 @@
               <p class="text-sm text-vintage-gray">{{ formatDate(payment.paymentDate) }}</p>
             </div>
             <div class="text-right">
-              <p class="font-medium text-vintage-charcoal">${{ payment.amount.toFixed(2) }}</p>
+              <p class="font-medium text-vintage-charcoal">${{ payment.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 {{ payment.paymentMethod }}
               </span>

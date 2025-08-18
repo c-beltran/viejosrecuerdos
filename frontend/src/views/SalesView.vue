@@ -49,7 +49,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-vintage-gray">Total Revenue</p>
-            <p class="text-2xl font-bold text-vintage-charcoal">${{ formatCurrency(salesStats.totalRevenue || 0) }}</p>
+            <p class="text-2xl font-bold text-vintage-charcoal">{{ formatCurrency(salesStats.totalRevenue || 0) }}</p>
           </div>
           <div class="p-3 bg-blue-100 rounded-full">
             <DollarSign class="w-6 h-6 text-blue-600" />
@@ -74,7 +74,7 @@
           <div>
             <p class="text-sm text-vintage-gray">Active Installments</p>
             <p class="text-2xl font-bold text-vintage-charcoal">{{ getActiveInstallmentCount() }}</p>
-            <p class="text-sm text-vintage-gray mt-1">${{ formatCurrency(getTotalOutstandingAmount()) }} outstanding</p>
+            <p class="text-sm text-vintage-gray mt-1">${{ getTotalOutstandingAmount().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} outstanding</p>
           </div>
           <div class="p-3 bg-purple-100 rounded-full">
             <CreditCard class="w-6 h-6 text-purple-600" />
@@ -240,21 +240,21 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-vintage-charcoal">
-                  ${{ sale.totalAmount ? formatCurrency(sale.totalAmount) : '0.00' }}
+                  ${{ sale.totalAmount ? sale.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' }}
                 </div>
                 <!-- Show installment information if available -->
                 <div v-if="isInstallmentSale(sale.saleId)" class="text-xs text-blue-600">
                   <div class="flex items-center gap-1">
                     <span class="font-medium">Installment:</span>
-                    <span>${{ formatCurrency(getAmountPaidForSale(sale.saleId)) }} paid</span>
+                    <span>${{ getAmountPaidForSale(sale.saleId).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} paid</span>
                     <span class="text-vintage-gray">/</span>
-                    <span class="text-vintage-gray">${{ formatCurrency(getRemainingAmountForSale(sale.saleId)) }} remaining</span>
+                    <span class="text-vintage-gray">${{ getRemainingAmountForSale(sale.saleId).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }} remaining</span>
                   </div>
                   <!-- Show payment breakdown -->
                   <div class="text-xs text-vintage-gray mt-1">
-                    <span>Down: ${{ formatCurrency(getInstallmentPlanForSale(sale.saleId)?.downPayment || 0) }}</span>
+                    <span>Down: ${{ (getInstallmentPlanForSale(sale.saleId)?.downPayment || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                     <span class="mx-1">+</span>
-                    <span>Payments: ${{ formatCurrency(getAmountPaidForSale(sale.saleId) - (getInstallmentPlanForSale(sale.saleId)?.downPayment || 0)) }}</span>
+                    <span>Payments: ${{ (getAmountPaidForSale(sale.saleId) - (getInstallmentPlanForSale(sale.saleId)?.downPayment || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>
                   </div>
                 </div>
                 <div v-if="sale.items && Array.isArray(sale.items)" class="text-xs text-vintage-gray">
@@ -360,6 +360,8 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useSalesStore } from '@/stores/sales'
 import { useInventoryStore } from '@/stores/inventory'
+import { formatCurrency } from '@/utils/formatters'
+
 import * as XLSX from 'xlsx'
 import { 
   ShoppingCart, 
@@ -622,9 +624,7 @@ const openInstallmentModal = (sale: Sale) => {
   router.push(`/sales/${sale.saleId}/installments`)
 }
 
-const formatCurrency = (amount: number) => {
-  return amount.toFixed(2)
-}
+
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -716,15 +716,15 @@ const exportSales = async () => {
         'Client': sale.client?.name || 'N/A',
         'Client Email': sale.client?.email || 'N/A',
         'Client Phone': sale.client?.phone || 'N/A',
-        'Total Amount': `$${formatCurrency(sale.totalAmount)}`,
+        'Total Amount': `$${sale.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         'Payment Method': sale.paymentMethod,
         'Status': sale.status,
         'Notes': sale.notes || 'N/A',
         'Items Count': sale.items?.length || 0,
         'Is Installment': isInstallmentSale(sale.saleId) ? 'Yes' : 'No',
-        'Down Payment': installmentPlan ? `$${formatCurrency(installmentPlan.downPayment || 0)}` : 'N/A',
-        'Amount Paid': `$${formatCurrency(amountPaid)}`,
-        'Remaining Amount': `$${formatCurrency(remainingAmount)}`,
+        'Down Payment': installmentPlan ? `$${(installmentPlan.downPayment || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A',
+'Amount Paid': `$${amountPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+'Remaining Amount': `$${remainingAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         'Installment Status': installmentPlan ? getEffectiveStatus(installmentPlan) : 'N/A',
         'Created Date': formatDate(sale.createdAt),
         'Updated Date': formatDate(sale.updatedAt)
@@ -822,7 +822,7 @@ watch(filters, () => {
 onMounted(() => {
   loadSales()
 })
-</script>
+</script> 
 
 <style scoped>
 .loading-spinner {

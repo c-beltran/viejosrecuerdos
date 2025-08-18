@@ -168,10 +168,31 @@ const getItemByQR = async (req, res) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${item.itemName} - Viejos Recuerdos</title>
+    <link rel="icon" type="image/x-icon" href="/favicon_io/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="/favicon_io/site.webmanifest">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .loading-spinner { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        /* Custom scrollbar for image carousel */
+        .overflow-x-auto::-webkit-scrollbar {
+            height: 6px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 min-h-screen">
@@ -188,14 +209,15 @@ const getItemByQR = async (req, res) => {
                 <!-- Image Gallery -->
                 <div class="space-y-4">
                     <div class="relative">
-                        <img src="${item.imageUrls[0]?.url || ''}" alt="${item.itemName}" 
-                             class="w-full h-96 object-cover rounded-xl shadow-md">
+                        <img id="mainImage" src="${item.imageUrls[0]?.url || ''}" alt="${item.itemName}" 
+                             class="w-full h-96 object-cover rounded-xl shadow-md" style="object-fit: contain !important;">
                     </div>
                     ${item.imageUrls.length > 1 ? `
-                    <div class="flex space-x-2 overflow-x-auto">
-                        ${item.imageUrls.map(img => `
+                    <div class="flex space-x-2 overflow-x-auto pb-2">
+                        ${item.imageUrls.map((img, index) => `
                         <img src="${img.url}" alt="${item.itemName}" 
-                             class="w-20 h-20 object-cover rounded-lg border-2 border-gray-200">
+                             class="w-20 h-20 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors ${index === 0 ? 'border-blue-500' : ''}"
+                             onclick="changeMainImage('${img.url}', this)">
                         `).join('')}
                     </div>
                     ` : ''}
@@ -204,9 +226,14 @@ const getItemByQR = async (req, res) => {
                 <!-- Item Information -->
                 <div class="space-y-6">
                     <div>
-                        <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium mb-4">
-                            ${item.category}
-                        </span>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                                ${item.category}
+                            </span>
+                            <span class="inline-block px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                                ID: ${item.friendlyId}
+                            </span>
+                        </div>
                         <h2 class="text-3xl font-bold text-gray-800 mb-4">${item.itemName}</h2>
                         ${item.descripcionArticulo ? `<p class="text-gray-600 text-lg">${item.descripcionArticulo}</p>` : ''}
                     </div>
@@ -214,7 +241,7 @@ const getItemByQR = async (req, res) => {
                     <div class="bg-gray-50 rounded-xl p-6">
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-gray-600">Price</span>
-                            <span class="text-3xl font-bold text-gray-800">$${(item.unitPrice / 1000).toFixed(0)}k</span>
+                            <span class="text-3xl font-bold text-gray-800">$${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Status</span>
@@ -237,6 +264,24 @@ const getItemByQR = async (req, res) => {
             <p>Scanned via QR Code • Viejos Recuerdos Antique Shop</p>
         </div>
     </div>
+
+    <script>
+        function changeMainImage(imageUrl, thumbnailElement) {
+            // Update main image
+            document.getElementById('mainImage').src = imageUrl;
+            
+            // Update thumbnail borders
+            const thumbnails = document.querySelectorAll('.overflow-x-auto img');
+            thumbnails.forEach(thumb => {
+                thumb.classList.remove('border-blue-500');
+                thumb.classList.add('border-gray-200');
+            });
+            
+            // Highlight selected thumbnail
+            thumbnailElement.classList.remove('border-gray-200');
+            thumbnailElement.classList.add('border-blue-500');
+        }
+    </script>
 </body>
 </html>`;
 

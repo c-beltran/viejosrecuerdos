@@ -339,7 +339,7 @@
             <h3 class="font-semibold text-vintage-charcoal mb-1 truncate">{{ item.itemName }}</h3>
             <p class="text-sm text-vintage-gray mb-2">{{ item.category }}</p>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-lg font-semibold text-antique-gold">${{ formatPrice(item.unitPrice) }}</span>
+              <span class="text-lg font-semibold text-antique-gold">{{ formatPrice(item.unitPrice) }}</span>
               <span class="text-sm text-vintage-gray">Qty: {{ item.currentQuantity }}</span>
             </div>
             <p v-if="item.descripcionArticulo" class="text-sm text-vintage-gray line-clamp-2">
@@ -403,7 +403,7 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 text-sm text-vintage-charcoal">{{ item.category }}</td>
-                <td class="px-6 py-4 text-sm font-semibold text-antique-gold">${{ formatPrice(item.unitPrice) }}</td>
+                <td class="px-6 py-4 text-sm font-semibold text-antique-gold">{{ formatPrice(item.unitPrice) }}</td>
                 <td class="px-6 py-4 text-sm text-vintage-charcoal">{{ item.currentQuantity }}</td>
                 <td class="px-6 py-4">
                   <span 
@@ -794,8 +794,12 @@ const exportInventory = async () => {
 }
 
 const formatPrice = (price: number | undefined) => {
-  if (price === undefined || price === null) return '0.00'
-  return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  if (price === undefined || price === null) return '$0.00'
+  // Price is already in dollars, just format with comma separators
+  return `$${price.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  })}`
 }
 
 const getFirstValidImage = (imageUrls: any[] | undefined) => {

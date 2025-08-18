@@ -508,6 +508,7 @@ import { useSalesStore } from '@/stores/sales'
 import { useInventoryStore } from '@/stores/inventory'
 import { useClientStore } from '@/stores/client'
 import { useAuthStore } from '@/stores/auth'
+import { formatCurrency } from '@/utils/formatters'
 import { 
   ArrowLeft,
   X,
@@ -1270,9 +1271,7 @@ const goBack = () => {
   router.push('/sales')
 }
 
-const formatCurrency = (amount: number) => {
-  return amount.toFixed(2)
-}
+
 
 // Watchers
 watch(installmentPlan.value, () => {
@@ -1318,7 +1317,7 @@ onMounted(async () => {
     }
   })
 })
-</script>
+</script> 
 
 <style scoped>
 .loading-spinner {

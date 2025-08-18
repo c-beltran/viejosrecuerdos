@@ -41,7 +41,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-vintage-gray">Total Outstanding</p>
-            <p class="text-2xl font-bold text-vintage-charcoal">${{ formatCurrency(totalOutstanding) }}</p>
+            <p class="text-2xl font-bold text-vintage-charcoal">${{ totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</p>
           </div>
           <div class="p-3 bg-blue-100 rounded-full">
             <DollarSign class="w-6 h-6 text-blue-600" />
@@ -148,16 +148,16 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-vintage-charcoal">
-                ${{ formatCurrency(plan.totalAmount) }}
+                ${{ plan.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-vintage-charcoal">
-                ${{ formatCurrency(plan.downPayment) }}
+                ${{ plan.downPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-vintage-gray">
-                {{ plan.numberOfInstallments }} × ${{ formatCurrency(plan.installmentAmount) }}
+                {{ plan.numberOfInstallments }} × ${{ plan.installmentAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-vintage-charcoal">
-                ${{ formatCurrency(getAmountPaid(plan.planId)) }}
+                ${{ getAmountPaid(plan.planId).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span :class="getStatusBadgeClass(getEffectiveStatus(plan))">
@@ -469,6 +469,7 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import { useSalesStore } from '@/stores/sales'
 import { useClientStore } from '@/stores/client'
+
 import * as XLSX from 'xlsx'
 import { 
   ArrowLeft,
@@ -703,9 +704,7 @@ const formatPaymentMethod = (method: string) => {
   return method || 'Unknown'
 }
 
-const formatCurrency = (amount: number) => {
-  return amount.toFixed(2)
-}
+
 
 const formatDate = (dateString: string) => {
   try {
@@ -838,15 +837,15 @@ const exportInstallments = async () => {
         'Client Name': client?.name || 'N/A',
         'Client Email': client?.email || 'N/A',
         'Client Phone': client?.phone || 'N/A',
-        'Total Amount': `$${formatCurrency(plan.totalAmount)}`,
-        'Down Payment': `$${formatCurrency(plan.downPayment)}`,
-        'Installment Amount': `$${formatCurrency(plan.installmentAmount)}`,
+        'Total Amount': `$${plan.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+'Down Payment': `$${plan.downPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+'Installment Amount': `$${plan.installmentAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         'Number of Installments': plan.numberOfInstallments,
         'Installment Frequency': plan.installmentFrequency,
         'Start Date': formatDate(plan.startDate),
         'Due Date': formatDate(plan.dueDate),
-        'Amount Paid': `$${formatCurrency(amountPaid)}`,
-        'Remaining Amount': `$${formatCurrency(remainingAmount)}`,
+        'Amount Paid': `$${amountPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+'Remaining Amount': `$${remainingAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         'Status': isCompleted ? 'Completed' : plan.status,
         'Is Completed': isCompleted ? 'Yes' : 'No',
         'Notes': plan.notes || 'N/A',
