@@ -286,7 +286,7 @@
               Edit Item
             </button>
             <button 
-              @click="router.push('/sales/new')" 
+              @click="goToNewSale" 
               class="w-full btn-antique"
               :disabled="item.status === 'Sold-Out'"
             >
@@ -452,6 +452,20 @@ const handleImageLoad = (event: Event) => {
   console.log('QR code image loaded successfully:', event)
   const target = event.target as HTMLImageElement
   console.log('Image src that loaded:', target.src)
+}
+
+const goToNewSale = () => {
+  if (!item.value) return
+  
+  // Navigate to new sale page with item ID
+  router.push({
+    path: '/sales/new',
+    query: { 
+      itemId: item.value.itemId,
+      itemName: item.value.itemName,
+      friendlyId: item.value.friendlyId
+    }
+  })
 }
 
 const deleteItem = () => {

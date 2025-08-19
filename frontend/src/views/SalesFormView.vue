@@ -1280,6 +1280,42 @@ watch(installmentPlan.value, () => {
   }
 })
 
+// Auto-populate item from query parameters
+const autoPopulateItem = async (itemId: string) => {
+  try {
+    // Find the item in the inventory
+    const item = inventoryStore.items.find(i => i.itemId === itemId)
+    
+    if (item) {
+      console.log('Found item for auto-population:', item)
+      
+      // Add the item to the sale form
+      const saleItem = {
+        itemId: item.itemId,
+        itemName: item.itemName,
+        friendlyId: item.friendlyId,
+        category: item.category,
+        quantity: 1,
+        unitPrice: item.unitPrice,
+        totalPrice: item.unitPrice
+      }
+      
+      form.value.items = [saleItem]
+      
+      // Show success message
+      toast.success(`Added ${item.itemName} to sale`)
+      
+      // Total amount will update automatically via computed property
+    } else {
+      console.warn('Item not found in inventory:', itemId)
+      toast.warning('Item not found in inventory')
+    }
+  } catch (err) {
+    console.error('Error auto-populating item:', err)
+    toast.error('Failed to auto-populate item')
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   try {
@@ -1295,6 +1331,13 @@ onMounted(async () => {
     
     if (isEditing.value) {
       await loadSale()
+    } else {
+      // Check if we have an itemId in query params for auto-population
+      const itemId = route.query.itemId as string
+      if (itemId) {
+        console.log('Auto-populating sale with item:', itemId)
+        await autoPopulateItem(itemId)
+      }
     }
     
     // Set initial selected date to today
