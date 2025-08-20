@@ -12,7 +12,7 @@
     <!-- Main App -->
     <div v-else class="flex h-screen">
       <!-- Desktop Sidebar -->
-      <aside v-if="isAuthenticated && !isMobile" class="sidebar w-64 hidden lg:block flex flex-col">
+      <aside v-if="isAuthenticated && !isMobile && !isLandingPage" class="sidebar w-64 hidden lg:block flex flex-col">
         <div class="flex-1 p-6">
           <!-- Logo -->
           <div class="flex items-center space-x-3 mb-8">
@@ -73,7 +73,7 @@
       </aside>
 
       <!-- Mobile Header -->
-      <header v-if="isAuthenticated && isMobile" class="fixed top-0 left-0 right-0 z-40 bg-white border-b border-vintage-beige shadow-sm">
+      <header v-if="isAuthenticated && isMobile && !isLandingPage" class="fixed top-0 left-0 right-0 z-40 bg-white border-b border-vintage-beige shadow-sm">
         <div class="flex items-center justify-between px-4 py-3">
           <div class="flex items-center space-x-3">
             <button @click="toggleMobileMenu" class="text-vintage-charcoal">
@@ -98,7 +98,7 @@
       </header>
 
       <!-- Mobile Menu Overlay -->
-      <div v-if="showMobileMenu" class="fixed inset-0 z-50 lg:hidden">
+      <div v-if="showMobileMenu && !isLandingPage" class="fixed inset-0 z-50 lg:hidden">
         <div class="absolute inset-0 bg-black/50" @click="closeMobileMenu"></div>
         <div class="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-xl">
           <div class="p-6">
@@ -164,6 +164,16 @@
 
       <!-- Main Content -->
       <main class="flex-1 flex flex-col overflow-hidden main-content">
+        <!-- Admin Access Button (only on landing page for logged-in users) -->
+        <div v-if="isAuthenticated && isLandingPage" class="fixed top-4 right-4 z-40">
+          <router-link 
+            to="/dashboard"
+            class="inline-flex items-center px-4 py-2 bg-antique-gold text-white rounded-lg shadow-lg hover:bg-antique-bronze transition-colors text-sm font-medium"
+          >
+            <Settings class="w-4 h-4 mr-2" />
+            Admin Panel
+          </router-link>
+        </div>
         <!-- Desktop Content -->
         <div v-if="!isMobile" class="flex-1 overflow-auto relative">
           <router-view />
@@ -175,7 +185,7 @@
         </div>
 
         <!-- Mobile Bottom Navigation -->
-        <nav v-if="isAuthenticated && isMobile" class="mobile-nav">
+        <nav v-if="isAuthenticated && isMobile && !isLandingPage" class="mobile-nav">
           <div class="flex justify-around py-2">
             <router-link 
               v-for="item in mobileNavigationItems" 
@@ -225,6 +235,16 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * Main App Component
+ * 
+ * Features:
+ * - Responsive navigation with sidebar for authenticated users
+ * - Landing page is completely public (no admin UI elements)
+ * - Mobile-friendly navigation with bottom nav bar
+ * - Admin access button appears on landing page for logged-in users
+ * - Conditional rendering based on authentication and current route
+ */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
@@ -240,7 +260,8 @@ import {
   Menu, 
   Search,
   BarChart3,
-  FileText
+  FileText,
+  Globe
 } from 'lucide-vue-next'
 // Composables
 const router = useRouter()
@@ -255,6 +276,7 @@ const showLogoutModal = ref(false)
 // Computed properties
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const user = computed(() => authStore.user)
+const isLandingPage = computed(() => router.currentRoute.value.path === '/')
 const userInitials = computed(() => {
   if (!user.value?.name) return 'U'
   return user.value.name.split(' ').map(n => n[0]).join('').toUpperCase()
@@ -262,6 +284,7 @@ const userInitials = computed(() => {
 
 // Navigation items
 const navigationItems = [
+  { name: 'Landing Page', path: '/', icon: Globe, divider: true },
   { name: 'Dashboard', path: '/dashboard', icon: Home },
   { name: 'Inventory', path: '/inventory', icon: Package },
   { name: 'Clients', path: '/clients', icon: Users },
@@ -273,6 +296,7 @@ const navigationItems = [
 ]
 
 const mobileNavigationItems = [
+  { name: 'Landing', path: '/', icon: Globe },
   { name: 'Home', path: '/dashboard', icon: Home },
   { name: 'Items', path: '/inventory', icon: Package },
   { name: 'Clients', path: '/clients', icon: Users },

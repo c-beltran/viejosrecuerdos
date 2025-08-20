@@ -454,6 +454,17 @@
           Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, inventoryStore.totalItems) }} of {{ inventoryStore.totalItems }} items
         </div>
         <div class="flex items-center space-x-2">
+          <!-- First Page Button -->
+          <button 
+            @click="handlePageChange(1)"
+            :disabled="isFirstPage"
+            :title="`Go to first page`"
+            class="px-3 py-2 text-sm border border-vintage-beige rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-vintage-beige transition-colors"
+          >
+            First
+          </button>
+          
+          <!-- Previous Button -->
           <button 
             @click="handlePageChange(currentPage - 1)"
             :disabled="isFirstPage"
@@ -462,9 +473,27 @@
           >
             Previous
           </button>
-          <span class="px-3 py-2 text-sm text-vintage-charcoal">
-            Page {{ currentPage }} of {{ totalPages }}
-          </span>
+          
+          <!-- Page Numbers -->
+          <div class="flex items-center space-x-1">
+            <template v-for="pageNum in visiblePageNumbers" :key="pageNum">
+              <button 
+                v-if="typeof pageNum === 'number'"
+                @click="handlePageChange(pageNum)"
+                :class="[
+                  'px-3 py-2 text-sm border rounded-lg transition-colors',
+                  pageNum === currentPage 
+                    ? 'bg-antique-gold text-white border-antique-gold' 
+                    : 'border-vintage-beige hover:bg-vintage-beige text-vintage-charcoal'
+                ]"
+              >
+                {{ pageNum }}
+              </button>
+              <span v-else class="px-2 py-2 text-sm text-vintage-gray">...</span>
+            </template>
+          </div>
+          
+          <!-- Next Button -->
           <button 
             @click="() => handlePageChange(currentPage + 1)"
             :disabled="isLastPage"
@@ -472,6 +501,16 @@
             class="px-3 py-2 text-sm border border-vintage-beige rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-vintage-beige transition-colors"
           >
             Next
+          </button>
+          
+          <!-- Last Page Button -->
+          <button 
+            @click="handlePageChange(totalPages)"
+            :disabled="isLastPage"
+            :title="`Go to last page (${totalPages})`"
+            class="px-3 py-2 text-sm border border-vintage-beige rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-vintage-beige transition-colors"
+          >
+            Last
           </button>
         </div>
       </div>
@@ -603,7 +642,50 @@ const paginatedItems = computed(() => {
 
 const totalPages = computed(() => {
   // Use total from backend pagination instead of client-side calculation
-  const pages = Math.ceil(inventoryStore.totalItems / itemsPerPage.value)
+  const total = inventoryStore.totalItems
+  const pages = Math.ceil(total / itemsPerPage.value)
+  return pages
+})
+
+// Generate visible page numbers with ellipsis for better UX
+const visiblePageNumbers = computed(() => {
+  const total = totalPages.value
+  const current = currentPage.value
+  const pages: (number | string)[] = []
+  
+  if (total <= 7) {
+    // Show all pages if 7 or fewer
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Always show first page
+    pages.push(1)
+    
+    if (current <= 4) {
+      // Show pages 2-5, then ellipsis, then last page
+      for (let i = 2; i <= 5; i++) {
+        pages.push(i)
+      }
+      pages.push('...')
+      pages.push(total)
+    } else if (current >= total - 3) {
+      // Show first page, ellipsis, then last 4 pages
+      pages.push('...')
+      for (let i = total - 4; i <= total; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Show first page, ellipsis, current-1, current, current+1, ellipsis, last page
+      pages.push('...')
+      pages.push(current - 1)
+      pages.push(current)
+      pages.push(current + 1)
+      pages.push('...')
+      pages.push(total)
+    }
+  }
+  
   return pages
 })
 

@@ -24,10 +24,13 @@ router.get('/docs/swagger.json', (req, res) => {
 // API routes
 router.use('/auth', require('./authRoutes'));
 router.use('/qr', require('./qrRoutes')); // Register QR routes first
-router.use('/', require('./inventoryRoutes')); // Register inventory routes
-router.use('/', require('./clientRoutes')); // Register client routes
-router.use('/', require('./salesRoutes')); // Register sales routes
-router.use('/', require('./imageRoutes')); // Register image routes
+router.use('/landing', require('./landingRoutes')); // Register landing page routes
 router.use('/installments', require('./installmentRoutes')); // Register installment routes
+
+// Catch-all routes (these must come LAST to avoid conflicts)
+router.use('/', require('./inventoryRoutes')); // Register inventory routes at root level
+router.use('/', require('./clientRoutes')); // Register client routes at root level
+router.use('/', require('./salesRoutes')); // Register sales routes at root level
+router.use('/', require('./imageRoutes')); // Register image routes at root level
 
 module.exports = router;

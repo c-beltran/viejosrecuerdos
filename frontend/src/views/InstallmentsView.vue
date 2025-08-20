@@ -903,7 +903,7 @@ const exportInstallments = async () => {
 onMounted(() => {
   loadInstallments()
 })
-</script>
+</script> 
 
 <style scoped>
 .loading-spinner {

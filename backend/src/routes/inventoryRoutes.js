@@ -15,17 +15,19 @@ const {
 
 // Public routes (no authentication required)
 router.get('/categories', getCategories);
-router.get('/inventory', getAllItems); // Public read access for inventory listing
 
 // Protected routes (authentication required)
 router.use(verifySupabaseToken);
 
+// All inventory operations now require authentication
+router.get('/inventory', getAllItems); // Back to original path
+
 // Inventory CRUD operations - be more specific to avoid conflicts
 router.get('/inventory/stats', getInventoryStats);
-router.get('/inventory/item/:itemId', getItemById); // Changed from /inventory/:itemId to /inventory/item/:itemId
+router.get('/inventory/item/:itemId', getItemById);
 router.get('/inventory/friendly/:friendlyId', getItemByFriendlyId); // Get item by friendly ID
 router.post('/inventory', createItem);
-router.put('/inventory/item/:itemId', updateItem); // Changed from /inventory/:itemId to /inventory/item/:itemId
-router.delete('/inventory/item/:itemId', deleteItem); // Changed from /inventory/:itemId to /inventory/item/:itemId
+router.put('/inventory/item/:itemId', updateItem);
+router.delete('/inventory/item/:itemId', deleteItem);
 
 module.exports = router; 

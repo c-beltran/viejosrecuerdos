@@ -62,7 +62,7 @@ const getAllItems = async (filters = {}) => {
     return {
       success: true,
       data: items,
-      count: count || items.length
+      count: count || 0
     };
   } catch (error) {
     return {
@@ -351,6 +351,107 @@ const getCategories = async () => {
   }
 };
 
+  // Get featured items for landing page
+  const getFeaturedItems = async () => {
+    try {
+      // Get section 1 items (first 12)
+      const { data: section1Data, error: section1Error } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('featured_on_landing', true)
+        .eq('landing_page_section', 1)
+        .not('landing_page_order', 'is', null)
+        .order('landing_page_order', { ascending: true })
+        .limit(12);
+
+      if (section1Error) {
+        throw new Error(`Database error for section 1: ${section1Error.message}`);
+      }
+
+      // Get section 2 items (first 12)
+      const { data: section2Data, error: section2Error } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('featured_on_landing', true)
+        .eq('landing_page_section', 2)
+        .not('landing_page_order', 'is', null)
+        .order('landing_page_order', { ascending: true })
+        .limit(12);
+
+      if (section2Error) {
+        throw new Error(`Database error for section 2: ${section2Error.message}`);
+      }
+
+      // Map database columns to frontend expected names
+      const mapItem = (item) => ({
+        ...item,
+        qrCodeUrl: generateQRCodeUrl(item.itemId),
+        createdAt: item.createDate,
+        updatedAt: item.updatedDate
+      });
+
+      return {
+        success: true,
+        data: {
+          section1: section1Data.map(mapItem),
+          section2: section2Data.map(mapItem)
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  };
+
+  // Update featured items for landing page
+  const updateFeaturedItems = async (featuredItems) => {
+    try {
+      // First, clear all existing featured items
+      const { error: clearError } = await supabase
+        .from('inventory')
+        .update({
+          featured_on_landing: false,
+          landing_page_section: null,
+          landing_page_order: null
+        })
+        .eq('featured_on_landing', true);
+
+      if (clearError) {
+        throw new Error(`Failed to clear existing featured items: ${clearError.message}`);
+      }
+
+      // Update items to be featured
+      for (const item of featuredItems) {
+        if (item.featured_on_landing) {
+          const { error: updateError } = await supabase
+            .from('inventory')
+            .update({
+              featured_on_landing: true,
+              landing_page_section: item.landing_page_section,
+              landing_page_order: item.landing_page_order
+            })
+            .eq('itemId', item.itemId);
+
+          if (updateError) {
+            throw new Error(`Failed to update item ${item.itemId}: ${updateError.message}`);
+            }
+          }
+        }
+
+      return {
+        success: true,
+        message: 'Featured items updated successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  };
+
 module.exports = {
   getAllItems,
   getItemById,
@@ -359,5 +460,7 @@ module.exports = {
   updateItem,
   deleteItem,
   getInventoryStats,
-  getCategories
+  getCategories,
+  getFeaturedItems,
+  updateFeaturedItems
 }; 

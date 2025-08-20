@@ -7,7 +7,7 @@ const getAllClients = async (filters = {}) => {
   try {
     let query = supabase
       .from('clients')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('createdAt', { ascending: false });
 
     // Apply filters
@@ -18,7 +18,14 @@ const getAllClients = async (filters = {}) => {
       query = query.eq('email', filters.email);
     }
 
-    const { data, error } = await query;
+    // Apply pagination
+    if (filters.limit && filters.limit > 0) {
+      const start = filters.offset || 0;
+      const end = start + filters.limit - 1;
+      query = query.range(start, end);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw new Error(`Database error: ${error.message}`);
@@ -27,7 +34,7 @@ const getAllClients = async (filters = {}) => {
     return {
       success: true,
       data: data || [],
-      count: data?.length || 0
+      count: count || 0
     };
   } catch (error) {
     return {

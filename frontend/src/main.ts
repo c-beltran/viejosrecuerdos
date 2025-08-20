@@ -24,6 +24,7 @@ import SalesFormView from './views/SalesFormView.vue'
 import SalesDetailView from './views/SalesDetailView.vue'
 import InstallmentsView from './views/InstallmentsView.vue'
 import SettingsView from './views/SettingsView.vue'
+import LandingView from './views/LandingView.vue'
 import NotFoundView from './views/NotFoundView.vue'
 
 // Create router
@@ -32,7 +33,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/dashboard'
+      name: 'landing',
+      component: LandingView,
+      meta: { requiresAuth: false }
     },
     {
       path: '/login',
@@ -136,6 +139,7 @@ const router = createRouter({
       component: SettingsView,
       meta: { requiresAuth: true }
     },
+
 
     {
       path: '/:pathMatch(.*)*',

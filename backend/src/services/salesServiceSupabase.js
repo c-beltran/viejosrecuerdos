@@ -157,7 +157,7 @@ const getAllSales = async (filters = {}) => {
             category
           )
         )
-      `)
+      `, { count: 'exact' })
       .order('saleDate', { ascending: false });
 
     // Apply filters
@@ -177,7 +177,14 @@ const getAllSales = async (filters = {}) => {
       query = query.lte('saleDate', filters.endDate);
     }
 
-    const { data, error } = await query;
+    // Apply pagination
+    if (filters.limit && filters.limit > 0) {
+      const start = filters.offset || 0;
+      const end = start + filters.limit - 1;
+      query = query.range(start, end);
+    }
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw new Error(`Database error: ${error.message}`);
@@ -186,7 +193,7 @@ const getAllSales = async (filters = {}) => {
     return {
       success: true,
       data: data || [],
-      count: data?.length || 0
+      count: count || 0
     };
   } catch (error) {
     return {
