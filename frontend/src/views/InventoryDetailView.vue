@@ -275,19 +275,23 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="card-antique p-6">
-          <h2 class="font-display text-xl text-vintage-charcoal mb-4">Quick Actions</h2>
+        <div class="card-antique p-6 border-l-4 border-l-antique-gold">
+          <h2 class="font-display text-xl text-vintage-charcoal mb-4 flex items-center">
+            <Package class="w-5 h-5 mr-2 text-antique-gold" />
+            Quick Actions
+          </h2>
           <div class="space-y-3">
+            <!-- Enhanced button styling for better visibility and user experience -->
             <button 
               @click="router.push(`/inventory/${itemId}/edit`)" 
-              class="w-full btn-antique-secondary"
+              class="w-full px-4 py-3 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all duration-200 font-medium flex items-center justify-center group shadow-sm hover:shadow-md"
             >
-              <Edit class="w-4 h-4 mr-2" />
+              <Edit class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
               Edit Item
             </button>
             <button 
               @click="goToNewSale" 
-              class="w-full btn-antique"
+              class="w-full btn-antique shadow-sm hover:shadow-md transition-all duration-200"
               :disabled="item.status === 'Sold-Out'"
             >
               <ShoppingCart class="w-4 h-4 mr-2" />
@@ -295,24 +299,11 @@
             </button>
             <button 
               @click="deleteItem"
-              class="w-full btn-antique-secondary text-red-600 hover:bg-red-50 hover:text-red-700"
+              class="w-full px-4 py-3 bg-red-50 border-2 border-red-200 text-red-700 rounded-lg hover:bg-red-100 hover:border-red-300 transition-all duration-200 font-medium flex items-center justify-center group shadow-sm hover:shadow-md"
             >
-              <Trash2 class="w-4 h-4 mr-2" />
+              <Trash2 class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
               Delete Item
             </button>
-          </div>
-        </div>
-
-        <!-- Stock Alert -->
-        <div v-if="item.currentQuantity <= 3" class="card-antique p-6 border-l-4 border-yellow-400">
-          <div class="flex items-start">
-            <AlertTriangle class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
-            <div>
-              <h3 class="font-semibold text-vintage-charcoal mb-1">Low Stock Alert</h3>
-              <p class="text-sm text-vintage-gray">
-                Only {{ item.currentQuantity }} item{{ item.currentQuantity !== 1 ? 's' : '' }} remaining
-              </p>
-            </div>
           </div>
         </div>
       </div>

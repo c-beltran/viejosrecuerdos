@@ -68,7 +68,7 @@
     </div>
 
      <!-- Stats Cards -->
-     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div class="card-antique p-4">
         <div class="flex items-center">
           <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -102,17 +102,6 @@
           </div>
         </div>
       </div>
-      <div class="card-antique p-4">
-        <div class="flex items-center">
-          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
-            <AlertTriangle class="w-5 h-5 text-yellow-600" />
-          </div>
-          <div>
-            <p class="text-sm text-vintage-gray">Low Stock</p>
-            <p class="text-xl font-semibold text-vintage-charcoal">{{ stats.lowStockItems }}</p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Search and Filters -->
@@ -139,66 +128,66 @@
       </div>
 
       <!-- Filters -->
-      <div v-if="showFilters" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-vintage-charcoal mb-2">Category</label>
-          <select 
-            v-model="filters.category" 
-            @change="applyFilters"
-            class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
-          >
-            <option value="">All Categories</option>
-            <option v-for="category in categories" :key="category" :value="category">
-              {{ category }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-vintage-charcoal mb-2">Status</label>
-          <select 
-            v-model="filters.status" 
-            @change="applyFilters"
-            class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
-          >
-            <option value="">All Status</option>
-            <option value="Available">Available</option>
-            <option value="Sold-Out">Sold Out</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-vintage-charcoal mb-2">Price Range</label>
-          <div class="flex space-x-2">
-            <input
-              v-model="filters.minPrice"
-              type="number"
-              placeholder="Min"
-              class="flex-1 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
-              @input="applyFilters"
-            />
-            <input
-              v-model="filters.maxPrice"
-              type="number"
-              placeholder="Max"
-              class="flex-1 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
-              @input="applyFilters"
-            />
+      <!-- Restructured layout to prevent overlapping and improve responsive design -->
+      <div v-if="showFilters" class="space-y-4">
+        <!-- Filter Row 1: Category and Status -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-vintage-charcoal mb-2">Category</label>
+            <select 
+              v-model="filters.category" 
+              @change="applyFilters"
+              class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
+            >
+              <option value="">All Categories</option>
+              <option v-for="category in categories" :key="category" :value="category">
+                {{ category }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-vintage-charcoal mb-2">Status</label>
+            <select 
+              v-model="filters.status" 
+              @change="applyFilters"
+              class="w-full px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal hover:border-antique-gold transition-colors"
+            >
+              <option value="">All Status</option>
+              <option value="Available">Available</option>
+              <option value="Sold-Out">Sold Out</option>
+            </select>
           </div>
         </div>
-        <div class="flex items-end space-x-2">
-          <button 
-            @click="exportInventory" 
-            class="flex-1 btn-antique"
-            title="Export filtered results to Excel"
-          >
-            <Download class="w-4 h-4 mr-2" />
-            Export
-          </button>
-          <button 
-            @click="clearFilters" 
-            class="flex-1 btn-antique-secondary"
-          >
-            Clear Filters
-          </button>
+        
+        <!-- Filter Row 2: Price Range and Clear Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-vintage-charcoal mb-2">Price Range</label>
+            <div class="flex space-x-2">
+              <input
+                v-model="filters.minPrice"
+                type="number"
+                placeholder="Min"
+                class="flex-1 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
+                @input="applyFilters"
+              />
+              <input
+                v-model="filters.maxPrice"
+                type="number"
+                placeholder="Max"
+                class="flex-1 px-3 py-2 bg-white border border-vintage-beige rounded-lg focus:ring-2 focus:ring-antique-gold focus:border-transparent text-vintage-charcoal placeholder-vintage-gray hover:border-antique-gold transition-colors"
+                @input="applyFilters"
+              />
+            </div>
+          </div>
+          <div class="flex items-end">
+            <button 
+              @click="clearFilters" 
+              class="w-full btn-antique"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
       </div>
     </div>

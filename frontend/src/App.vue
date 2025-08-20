@@ -284,13 +284,13 @@ const userInitials = computed(() => {
 
 // Navigation items
 const navigationItems = [
-  { name: 'Landing Page', path: '/', icon: Globe, divider: true },
+  // { name: 'Landing Page', path: '/', icon: Globe, divider: true },
   { name: 'Dashboard', path: '/dashboard', icon: Home },
   { name: 'Inventory', path: '/inventory', icon: Package },
   { name: 'Clients', path: '/clients', icon: Users },
   { name: 'Sales', path: '/sales', icon: ShoppingCart },
   { name: 'Installments', path: '/installments', icon: CreditCard },
-  { name: 'Reports', path: '/reports', icon: BarChart3 },
+  // { name: 'Reports', path: '/reports', icon: BarChart3 },
   { name: 'Settings', path: '/settings', icon: Settings },
   { name: 'Logout', path: '#', icon: LogOut, action: 'logout', divider: true }
 ]

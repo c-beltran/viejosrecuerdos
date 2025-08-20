@@ -646,7 +646,7 @@ const removeImage = (index: number) => {
   } else {
     // Adjust index for existing images
     const existingImageIndex = form.value.pendingImages ? index - form.value.pendingImages.length : index
-    if (existingImageIndex >= 0 && existingImageIndex < form.value.imageUrls.length) {
+    if (existingImageIndex >= 0 && form.value.imageUrls && existingImageIndex < form.value.imageUrls.length) {
       form.value.imageUrls.splice(existingImageIndex, 1)
     }
   }
@@ -707,29 +707,69 @@ const handleSubmit = async () => {
       if (form.value.pendingImages && form.value.pendingImages.length > 0) {
         console.log('Uploading pending images for update:', form.value.pendingImages.length)
         
+        // Collect all uploaded images first for update
+        const uploadedImages = []
+        
         for (const file of form.value.pendingImages) {
           try {
-            const uploadResponse = await inventoryStore.uploadImage(file, itemId.value)
+            const uploadResponse: any = await inventoryStore.uploadImage(file, itemId.value)
             console.log('Image upload response for update:', uploadResponse)
             
-            // Extract just the image data from the response
-            const imageData = uploadResponse.image || uploadResponse
-            console.log('Extracted image data for update:', imageData)
+            // Extract image data from the response
+            // The backend returns: { image: {...}, item: {...} }
+            let imageData: any = null
             
-            // Add the uploaded image to the item's imageUrls
-            const updatedImageUrls = [...(form.value.imageUrls || []), imageData]
+            if (uploadResponse?.image) {
+              // Direct image object format
+              imageData = {
+                fileName: uploadResponse.image.fileName,
+                originalName: uploadResponse.image.originalName,
+                url: uploadResponse.image.url
+              }
+            } else if (uploadResponse?.success && uploadResponse?.data) {
+              // Check if it's the new format with 'uploaded' array
+              if (uploadResponse.data.uploaded && uploadResponse.data.uploaded.length > 0) {
+                // Find the image that matches this file
+                const uploadedImage = uploadResponse.data.uploaded.find((img: any) => 
+                  img.originalName === file.name
+                )
+                if (uploadedImage) {
+                  imageData = {
+                    fileName: uploadedImage.originalName,
+                    originalName: uploadedImage.originalName,
+                    url: uploadedImage.mediumUrl || uploadedImage.optimizedUrl
+                  }
+                }
+              } else {
+                // Fallback to old format
+                imageData = uploadResponse.data
+              }
+            }
             
-            // Update the item with the new image
-            await inventoryStore.updateItem(itemId.value, {
-              ...updateData,
-              imageUrls: updatedImageUrls
-            })
-            
-            toast.success(`Image ${file.name} uploaded successfully`)
+            if (imageData) {
+              console.log('Extracted image data for update:', imageData)
+              uploadedImages.push(imageData)
+              toast.success(`Image ${file.name} uploaded successfully`)
+            } else {
+              console.error('Could not extract image data from response:', uploadResponse)
+              toast.error(`Failed to process ${file.name}`)
+            }
           } catch (err) {
             console.error('Failed to upload image for update:', file.name, err)
             toast.error(`Failed to upload ${file.name}`)
           }
+        }
+        
+        // Update the item with ALL uploaded images at once
+        if (uploadedImages.length > 0) {
+          const updatedImageUrls = [...(form.value.imageUrls || []), ...uploadedImages]
+          
+          await inventoryStore.updateItem(itemId.value, {
+            ...updateData,
+            imageUrls: updatedImageUrls
+          })
+          
+          console.log('Updated item with all images:', updatedImageUrls.length)
         }
       }
       
@@ -760,29 +800,69 @@ const handleSubmit = async () => {
       if (form.value.pendingImages && form.value.pendingImages.length > 0) {
         console.log('Uploading pending images:', form.value.pendingImages.length)
         
+        // Collect all uploaded images first
+        const uploadedImages = []
+        
         for (const file of form.value.pendingImages) {
           try {
-            const uploadResponse = await inventoryStore.uploadImage(file, createdItem.itemId)
+            const uploadResponse: any = await inventoryStore.uploadImage(file, createdItem.itemId)
             console.log('Image upload response:', uploadResponse)
             
-            // Extract just the image data from the response
-            const imageData = uploadResponse.image || uploadResponse
-            console.log('Extracted image data:', imageData)
+            // Extract image data from the response
+            // The backend returns: { image: {...}, item: {...} }
+            let imageData: any = null
             
-            // Add the uploaded image to the item's imageUrls
-            const updatedImageUrls = [...(createdItem.imageUrls || []), imageData]
+            if (uploadResponse?.image) {
+              // Direct image object format
+              imageData = {
+                fileName: uploadResponse.image.fileName,
+                originalName: uploadResponse.image.originalName,
+                url: uploadResponse.image.url
+              }
+            } else if (uploadResponse?.success && uploadResponse?.data) {
+              // Check if it's the new format with 'uploaded' array
+              if (uploadResponse.data.uploaded && uploadResponse.data.uploaded.length > 0) {
+                // Find the image that matches this file
+                const uploadedImage = uploadResponse.data.uploaded.find((img: any) => 
+                  img.originalName === file.name
+                )
+                if (uploadedImage) {
+                  imageData = {
+                    fileName: uploadedImage.originalName,
+                    originalName: uploadedImage.originalName,
+                    url: uploadedImage.mediumUrl || uploadedImage.optimizedUrl
+                  }
+                }
+              } else {
+                // Fallback to old format
+                imageData = uploadResponse.data
+              }
+            }
             
-            // Update the item with the new image
-            await inventoryStore.updateItem(createdItem.itemId, {
-              ...createData,
-              imageUrls: updatedImageUrls
-            })
-            
-            toast.success(`Image ${file.name} uploaded successfully`)
+            if (imageData) {
+              console.log('Extracted image data:', imageData)
+              uploadedImages.push(imageData)
+              toast.success(`Image ${file.name} uploaded successfully`)
+            } else {
+              console.error('Could not extract image data from response:', uploadResponse)
+              toast.error(`Failed to process ${file.name}`)
+            }
           } catch (err) {
             console.error('Failed to upload image:', file.name, err)
             toast.error(`Failed to upload ${file.name}`)
           }
+        }
+        
+        // Update the item with ALL uploaded images at once
+        if (uploadedImages.length > 0) {
+          const updatedImageUrls = [...(createdItem.imageUrls || []), ...uploadedImages]
+          
+          await inventoryStore.updateItem(createdItem.itemId, {
+            ...createData,
+            imageUrls: updatedImageUrls
+          })
+          
+          console.log('Updated item with all images:', updatedImageUrls.length)
         }
       }
       
