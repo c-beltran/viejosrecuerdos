@@ -211,6 +211,188 @@
       </div>
     </section>
 
+    <!-- Featured Items Section 3 -->
+    <section class="py-16">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="font-display text-3xl lg:text-4xl text-vintage-charcoal mb-4">Colección Exclusiva</h2>
+          <p class="text-lg text-vintage-gray">Nuestra tercera colección de 12 artículos exclusivos</p>
+        </div>
+        
+        <div v-if="featuredItems.section3.length > 0" class="relative">
+          <!-- Carousel Container -->
+          <div class="overflow-hidden rounded-lg px-4 sm:px-8 md:px-6 lg:px-8 carousel-peek">
+            <div 
+              class="flex transition-transform duration-700 ease-in-out py-4"
+              :style="{ transform: `translateX(-${currentSlide3 * 100}%)` }"
+            >
+              <!-- Create slides with 3.5 items each (12 total items = 3 slides) -->
+              <div 
+                v-for="(slide, slideIndex) in section3Slides" 
+                :key="`slide-${slideIndex}`"
+                class="flex flex-shrink-0"
+                style="width: 100%"
+              >
+                <div 
+                  v-for="item in slide" 
+                  :key="item.itemId"
+                  class="w-56 sm:w-64 md:w-72 flex-shrink-0 px-2 sm:px-3 md:px-3 lg:px-4"
+                >
+                  <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 h-full transform hover:scale-105">
+                    <div class="relative h-48 bg-vintage-beige">
+                      <img v-if="item.imageUrls && item.imageUrls.length > 0" 
+                           :src="item.imageUrls[0].url" 
+                           :alt="item.itemName"
+                           class="w-full h-full object-cover" />
+                      <div v-else class="flex items-center justify-center h-full">
+                        <Package class="w-12 h-12 text-vintage-beige" />
+                      </div>
+                    </div>
+                    <div class="p-4">
+                      <div class="flex items-start justify-between mb-2">
+                        <h3 class="font-semibold text-base text-vintage-charcoal truncate flex-1 mr-2">{{ item.itemName }}</h3>
+                        <span class="text-xs text-vintage-gray bg-vintage-beige px-2 py-1 rounded flex-shrink-0">{{ item.friendlyId }}</span>
+                      </div>
+                      <p class="text-sm text-vintage-gray mb-3">{{ item.category }}</p>
+                      <div class="text-xl font-bold text-antique-gold mb-3">${{ formatPrice(item.unitPrice) }}</div>
+                      <button @click="viewItemDetails(item.itemId)" class="w-full bg-antique-gold text-white py-2 px-3 rounded-lg hover:bg-antique-bronze transition-colors text-sm">
+                        Ver Detalles
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Navigation Arrows -->
+          <button 
+            @click="previousSlide(3)"
+            :disabled="section3Slides.length <= 1 || currentSlide3 === 0"
+            class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white/90 text-vintage-charcoal p-3 rounded-full shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
+          >
+            <ChevronLeft class="w-6 h-6" />
+          </button>
+          <button 
+            @click="nextSlide(3)"
+            :disabled="section3Slides.length <= 1 || currentSlide3 >= section3Slides.length - 1"
+            class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white/90 text-vintage-charcoal p-3 rounded-full shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
+          >
+            <ChevronRight class="w-6 h-6" />
+          </button>
+          
+          <!-- Slide Indicators -->
+          <div v-if="section3Slides.length > 1" class="flex justify-center mt-6 space-x-2">
+            <button 
+              v-for="index in section3Slides.length" 
+              :key="index"
+              @click="goToSlide(3, index - 1)"
+              :class="[
+                'w-3 h-3 rounded-full transition-colors',
+                currentSlide3 === index - 1 ? 'bg-antique-gold' : 'bg-vintage-beige hover:bg-antique-gold/50'
+              ]"
+            />
+          </div>
+        </div>
+        
+        <div v-else class="text-center py-16">
+          <Package class="w-16 h-16 text-vintage-beige mx-auto mb-4" />
+          <p class="text-vintage-gray text-lg">No hay elementos destacados en esta sección</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Items Section 4 -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="font-display text-3xl lg:text-4xl text-vintage-charcoal mb-4">Tesoros Únicos</h2>
+          <p class="text-lg text-vintage-gray">Nuestra cuarta colección de 12 artículos únicos</p>
+        </div>
+        
+        <div v-if="featuredItems.section4.length > 0" class="relative">
+          <!-- Carousel Container -->
+          <div class="overflow-hidden rounded-lg px-4 sm:px-8 md:px-6 lg:px-8 carousel-peek">
+            <div 
+              class="flex transition-transform duration-700 ease-in-out py-4"
+              :style="{ transform: `translateX(-${currentSlide4 * 100}%)` }"
+            >
+              <!-- Create slides with 3.5 items each (12 total items = 3 slides) -->
+              <div 
+                v-for="(slide, slideIndex) in section4Slides" 
+                :key="`slide-${slideIndex}`"
+                class="flex flex-shrink-0"
+                style="width: 100%"
+              >
+                <div 
+                  v-for="item in slide" 
+                  :key="item.itemId"
+                  class="w-56 sm:w-64 md:w-72 flex-shrink-0 px-2 sm:px-3 md:px-3 lg:px-4"
+                >
+                  <div class="bg-white rounded-lg shadow-lg overflow-hidden border border-vintage-beige hover:shadow-xl transition-all duration-300 h-full transform hover:scale-105">
+                    <div class="relative h-48 bg-vintage-beige">
+                      <img v-if="item.imageUrls && item.imageUrls.length > 0" 
+                           :src="item.imageUrls[0].url" 
+                           :alt="item.itemName"
+                           class="w-full h-full object-cover" />
+                      <div v-else class="flex items-center justify-center h-full">
+                        <Package class="w-12 h-12 text-vintage-beige" />
+                      </div>
+                    </div>
+                    <div class="p-4">
+                      <div class="flex items-start justify-between mb-2">
+                        <h3 class="font-semibold text-base text-vintage-charcoal truncate flex-1 mr-2">{{ item.itemName }}</h3>
+                        <span class="text-xs text-vintage-gray bg-vintage-beige px-2 py-1 rounded flex-shrink-0">{{ item.friendlyId }}</span>
+                      </div>
+                      <p class="text-sm text-vintage-gray mb-3">{{ item.category }}</p>
+                      <div class="text-xl font-bold text-antique-gold mb-3">${{ formatPrice(item.unitPrice) }}</div>
+                      <button @click="viewItemDetails(item.itemId)" class="w-full bg-antique-gold text-white py-2 px-3 rounded-lg hover:bg-antique-bronze transition-colors text-sm">
+                        Ver Detalles
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Navigation Arrows -->
+          <button 
+            @click="previousSlide(4)"
+            :disabled="section4Slides.length <= 1 || currentSlide4 === 0"
+            class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white/90 text-vintage-charcoal p-3 rounded-full shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
+          >
+            <ChevronLeft class="w-6 h-6" />
+          </button>
+          <button 
+            @click="nextSlide(4)"
+            :disabled="section4Slides.length <= 1 || currentSlide4 >= section4Slides.length - 1"
+            class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white/90 text-vintage-charcoal p-3 rounded-full shadow-lg hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
+          >
+            <ChevronRight class="w-6 h-6" />
+          </button>
+          
+          <!-- Slide Indicators -->
+          <div v-if="section4Slides.length > 1" class="flex justify-center mt-6 space-x-2">
+            <button 
+              v-for="index in section4Slides.length" 
+              :key="index"
+              @click="goToSlide(4, index - 1)"
+              :class="[
+                'w-3 h-3 rounded-full transition-colors',
+                currentSlide4 === index - 1 ? 'bg-antique-gold' : 'bg-vintage-beige hover:bg-antique-gold/50'
+              ]"
+            />
+          </div>
+        </div>
+        
+        <div v-else class="text-center py-16">
+          <Package class="w-16 h-16 text-vintage-beige mx-auto mb-4" />
+          <p class="text-vintage-gray text-lg">No hay elementos destacados en esta sección</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Footer -->
     <footer class="bg-vintage-charcoal text-white py-12">
       <div class="max-w-7xl mx-auto px-4 text-center">
@@ -240,13 +422,17 @@ import type { InventoryItem } from '@/types'
 
 const featuredItems = ref({
   section1: [] as InventoryItem[],
-  section2: [] as InventoryItem[]
+  section2: [] as InventoryItem[],
+  section3: [] as InventoryItem[],
+  section4: [] as InventoryItem[]
 })
 
 // Carousel state
 const currentSlide1 = ref(0)
 const currentSlide2 = ref(0)
-      const itemsPerSlide = ref(3.5)
+const currentSlide3 = ref(0)
+const currentSlide4 = ref(0)
+const itemsPerSlide = ref(3.5)
 
       // Responsive items per slide
       const getItemsPerSlide = () => {
@@ -265,13 +451,21 @@ const updateItemsPerSlide = () => {
 const debugCarousel = () => {
   console.log('Section 1 items:', featuredItems.value.section1.length)
   console.log('Section 2 items:', featuredItems.value.section2.length)
+  console.log('Section 3 items:', featuredItems.value.section3.length)
+  console.log('Section 4 items:', featuredItems.value.section4.length)
   console.log('Items per slide:', itemsPerSlide.value)
   console.log('Current slide 1:', currentSlide1.value)
   console.log('Current slide 2:', currentSlide2.value)
+  console.log('Current slide 3:', currentSlide3.value)
+  console.log('Current slide 4:', currentSlide4.value)
   console.log('Section 1 slides:', section1Slides.value)
   console.log('Section 2 slides:', section2Slides.value)
+  console.log('Section 3 slides:', section3Slides.value)
+  console.log('Section 4 slides:', section4Slides.value)
   console.log('Max slides 1:', section1Slides.value.length)
   console.log('Max slides 2:', section2Slides.value.length)
+  console.log('Max slides 3:', section3Slides.value.length)
+  console.log('Max slides 4:', section4Slides.value.length)
 }
 
 // Computed properties for carousel slides
@@ -299,13 +493,43 @@ const debugCarousel = () => {
         return slides
       })
 
+      const section3Slides = computed(() => {
+        const slides = []
+        // For desktop (3.5 items), we want to show 3.5 items per slide
+        // Each slide should contain 4 items, but display only 3.5
+        // With 12 items, we'll have 3 slides (4 + 4 + 4)
+        const slideSize = 4
+        for (let i = 0; i < featuredItems.value.section3.length; i += slideSize) {
+          slides.push(featuredItems.value.section3.slice(i, i + slideSize))
+        }
+        return slides
+      })
+
+      const section4Slides = computed(() => {
+        const slides = []
+        // For desktop (3.5 items), we want to show 3.5 items per slide
+        // Each slide should contain 4 items, but display only 3.5
+        // With 12 items, we'll have 3 slides (4 + 4 + 4)
+        const slideSize = 4
+        for (let i = 0; i < featuredItems.value.section4.length; i += slideSize) {
+          slides.push(featuredItems.value.section4.slice(i, i + slideSize))
+        }
+        return slides
+      })
+
 // Auto-scroll intervals and interaction tracking
 let autoSlideInterval1: NodeJS.Timeout
 let autoSlideInterval2: NodeJS.Timeout
+let autoSlideInterval3: NodeJS.Timeout
+let autoSlideInterval4: NodeJS.Timeout
 let interactionTimeout1: NodeJS.Timeout
 let interactionTimeout2: NodeJS.Timeout
+let interactionTimeout3: NodeJS.Timeout
+let interactionTimeout4: NodeJS.Timeout
 const isAutoScrollPaused1 = ref(false)
 const isAutoScrollPaused2 = ref(false)
+const isAutoScrollPaused3 = ref(false)
+const isAutoScrollPaused4 = ref(false)
 
 const loadFeaturedItems = async () => {
   try {
@@ -340,10 +564,18 @@ const nextSlide = (section: number) => {
     const maxSlides = Math.max(0, section1Slides.value.length - 1)
     currentSlide1.value = currentSlide1.value >= maxSlides ? 0 : currentSlide1.value + 1
     pauseAutoScroll(1)
-  } else {
+  } else if (section === 2) {
     const maxSlides = Math.max(0, section2Slides.value.length - 1)
     currentSlide2.value = currentSlide2.value >= maxSlides ? 0 : currentSlide2.value + 1
     pauseAutoScroll(2)
+  } else if (section === 3) {
+    const maxSlides = Math.max(0, section3Slides.value.length - 1)
+    currentSlide3.value = currentSlide3.value >= maxSlides ? 0 : currentSlide3.value + 1
+    pauseAutoScroll(3)
+  } else if (section === 4) {
+    const maxSlides = Math.max(0, section4Slides.value.length - 1)
+    currentSlide4.value = currentSlide4.value >= maxSlides ? 0 : currentSlide4.value + 1
+    pauseAutoScroll(4)
   }
 }
 
@@ -352,10 +584,18 @@ const previousSlide = (section: number) => {
     const maxSlides = Math.max(0, section1Slides.value.length - 1)
     currentSlide1.value = currentSlide1.value <= 0 ? maxSlides : currentSlide1.value - 1
     pauseAutoScroll(1)
-  } else {
+  } else if (section === 2) {
     const maxSlides = Math.max(0, section2Slides.value.length - 1)
     currentSlide2.value = currentSlide2.value <= 0 ? maxSlides : currentSlide2.value - 1
     pauseAutoScroll(2)
+  } else if (section === 3) {
+    const maxSlides = Math.max(0, section3Slides.value.length - 1)
+    currentSlide3.value = currentSlide3.value <= 0 ? maxSlides : currentSlide3.value - 1
+    pauseAutoScroll(3)
+  } else if (section === 4) {
+    const maxSlides = Math.max(0, section4Slides.value.length - 1)
+    currentSlide4.value = currentSlide4.value <= 0 ? maxSlides : currentSlide4.value - 1
+    pauseAutoScroll(4)
   }
 }
 
@@ -363,13 +603,19 @@ const goToSlide = (section: number, index: number) => {
   if (section === 1) {
     currentSlide1.value = index
     pauseAutoScroll(1)
-  } else {
+  } else if (section === 2) {
     currentSlide2.value = index
     pauseAutoScroll(2)
+  } else if (section === 3) {
+    currentSlide3.value = index
+    pauseAutoScroll(3)
+  } else if (section === 4) {
+    currentSlide4.value = index
+    pauseAutoScroll(4)
   }
 }
 
-// Pause auto-scroll for 5 seconds when user interacts
+// Pause auto-scroll for 8 seconds when user interacts
 const pauseAutoScroll = (section: number) => {
   if (section === 1) {
     isAutoScrollPaused1.value = true
@@ -377,11 +623,23 @@ const pauseAutoScroll = (section: number) => {
     interactionTimeout1 = setTimeout(() => {
       isAutoScrollPaused1.value = false
     }, 8000)
-  } else {
+  } else if (section === 2) {
     isAutoScrollPaused2.value = true
     if (interactionTimeout2) clearTimeout(interactionTimeout2)
     interactionTimeout2 = setTimeout(() => {
       isAutoScrollPaused2.value = false
+    }, 8000)
+  } else if (section === 3) {
+    isAutoScrollPaused3.value = true
+    if (interactionTimeout3) clearTimeout(interactionTimeout3)
+    interactionTimeout3 = setTimeout(() => {
+      isAutoScrollPaused3.value = false
+    }, 8000)
+  } else if (section === 4) {
+    isAutoScrollPaused4.value = true
+    if (interactionTimeout4) clearTimeout(interactionTimeout4)
+    interactionTimeout4 = setTimeout(() => {
+      isAutoScrollPaused4.value = false
     }, 8000)
   }
 }
@@ -403,13 +661,33 @@ const startAutoSlide = () => {
       currentSlide2.value = currentSlide2.value >= maxSlides ? 0 : currentSlide2.value + 1
     }
   }, 6000)
+
+  autoSlideInterval3 = setInterval(() => {
+    if (section3Slides.value.length > 1 && !isAutoScrollPaused3.value) {
+      // Use internal slide change without triggering pause
+      const maxSlides = Math.max(0, section3Slides.value.length - 1)
+      currentSlide3.value = currentSlide3.value >= maxSlides ? 0 : currentSlide3.value + 1
+    }
+  }, 7000)
+
+  autoSlideInterval4 = setInterval(() => {
+    if (section4Slides.value.length > 1 && !isAutoScrollPaused4.value) {
+      // Use internal slide change without triggering pause
+      const maxSlides = Math.max(0, section4Slides.value.length - 1)
+      currentSlide4.value = currentSlide4.value >= maxSlides ? 0 : currentSlide4.value + 1
+    }
+  }, 9000)
 }
 
 const stopAutoSlide = () => {
   if (autoSlideInterval1) clearInterval(autoSlideInterval1)
   if (autoSlideInterval2) clearInterval(autoSlideInterval2)
+  if (autoSlideInterval3) clearInterval(autoSlideInterval3)
+  if (autoSlideInterval4) clearInterval(autoSlideInterval4)
   if (interactionTimeout1) clearTimeout(interactionTimeout1)
   if (interactionTimeout2) clearTimeout(interactionTimeout2)
+  if (interactionTimeout3) clearTimeout(interactionTimeout3)
+  if (interactionTimeout4) clearTimeout(interactionTimeout4)
 }
 
 onMounted(async () => {

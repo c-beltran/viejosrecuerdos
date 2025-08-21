@@ -382,6 +382,34 @@ const getCategories = async () => {
         throw new Error(`Database error for section 2: ${section2Error.message}`);
       }
 
+      // Get section 3 items (first 12)
+      const { data: section3Data, error: section3Error } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('featured_on_landing', true)
+        .eq('landing_page_section', 3)
+        .not('landing_page_order', 'is', null)
+        .order('landing_page_order', { ascending: true })
+        .limit(12);
+
+      if (section3Error) {
+        throw new Error(`Database error for section 3: ${section3Error.message}`);
+      }
+
+      // Get section 4 items (first 12)
+      const { data: section4Data, error: section4Error } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('featured_on_landing', true)
+        .eq('landing_page_section', 4)
+        .not('landing_page_order', 'is', null)
+        .order('landing_page_order', { ascending: true })
+        .limit(12);
+
+      if (section4Error) {
+        throw new Error(`Database error for section 4: ${section4Error.message}`);
+      }
+
       // Map database columns to frontend expected names
       const mapItem = (item) => ({
         ...item,
@@ -394,7 +422,9 @@ const getCategories = async () => {
         success: true,
         data: {
           section1: section1Data.map(mapItem),
-          section2: section2Data.map(mapItem)
+          section2: section2Data.map(mapItem),
+          section3: section3Data.map(mapItem),
+          section4: section4Data.map(mapItem)
         }
       };
     } catch (error) {

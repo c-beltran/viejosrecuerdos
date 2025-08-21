@@ -99,7 +99,7 @@
       </div>
 
       <!-- Featured Items Sections -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
         <!-- Section 1 -->
         <div class="bg-vintage-ivory rounded-lg p-4">
           <h3 class="font-medium text-vintage-charcoal mb-4 flex items-center gap-2">
@@ -201,6 +201,108 @@
             </template>
           </draggable>
         </div>
+
+        <!-- Section 3 -->
+        <div class="bg-vintage-ivory rounded-lg p-4">
+          <h3 class="font-medium text-vintage-charcoal mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</span>
+            Third Carousel Section ({{ featuredItems.section3.length }}/12)
+          </h3>
+          
+          <div 
+            v-if="featuredItems.section3.length === 0"
+            class="text-center py-8 text-vintage-gray"
+          >
+            <Package class="w-12 h-12 mx-auto mb-2 text-vintage-beige" />
+            <p>No items selected for this section</p>
+            <p class="text-sm">Search and add items above</p>
+          </div>
+
+          <draggable
+            v-else
+            v-model="featuredItems.section3"
+            group="featured-items"
+            item-key="itemId"
+            class="space-y-2"
+            @end="updateOrder(3)"
+          >
+            <template #item="{ element: item }">
+              <div class="bg-white rounded-lg p-3 border border-vintage-beige hover:border-antique-gold transition-colors">
+                <div class="flex items-center gap-3">
+                  <GripVertical class="w-5 h-5 text-vintage-gray cursor-grab" />
+                  <img 
+                    v-if="item.imageUrls && item.imageUrls.length > 0"
+                    :src="item.imageUrls[0].url" 
+                    :alt="item.itemName"
+                    class="w-12 h-12 object-cover rounded-lg"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-vintage-charcoal truncate">{{ item.itemName }}</div>
+                    <div class="text-sm text-vintage-gray">ID: {{ item.friendlyId }}</div>
+                    <div class="text-sm text-vintage-gray">{{ item.category }}</div>
+                  </div>
+                  <button
+                    @click="removeFromFeatured(item, 3)"
+                    class="text-red-600 hover:text-red-800 p-1"
+                  >
+                    <X class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </template>
+          </draggable>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="bg-vintage-ivory rounded-lg p-4">
+          <h3 class="font-medium text-vintage-charcoal mb-4 flex items-center gap-2">
+            <span class="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</span>
+            Fourth Carousel Section ({{ featuredItems.section4.length }}/12)
+          </h3>
+          
+          <div 
+            v-if="featuredItems.section4.length === 0"
+            class="text-center py-8 text-vintage-gray"
+          >
+            <Package class="w-12 h-12 mx-auto mb-2 text-vintage-beige" />
+            <p>No items selected for this section</p>
+            <p class="text-sm">Search and add items above</p>
+          </div>
+
+          <draggable
+            v-else
+            v-model="featuredItems.section4"
+            group="featured-items"
+            item-key="itemId"
+            class="space-y-2"
+            @end="updateOrder(4)"
+          >
+            <template #item="{ element: item }">
+              <div class="bg-white rounded-lg p-3 border border-vintage-beige hover:border-antique-gold transition-colors">
+                <div class="flex items-center gap-3">
+                  <GripVertical class="w-5 h-5 text-vintage-gray cursor-grab" />
+                  <img 
+                    v-if="item.imageUrls && item.imageUrls.length > 0"
+                    :src="item.imageUrls[0].url" 
+                    :alt="item.itemName"
+                    class="w-12 h-12 object-cover rounded-lg"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-vintage-charcoal truncate">{{ item.itemName }}</div>
+                    <div class="text-sm text-vintage-gray">ID: {{ item.friendlyId }}</div>
+                    <div class="text-sm text-vintage-gray">{{ item.category }}</div>
+                  </div>
+                  <button
+                    @click="removeFromFeatured(item, 4)"
+                    class="text-red-600 hover:text-red-800 p-1"
+                  >
+                    <X class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </template>
+          </draggable>
+        </div>
       </div>
     </div>
   </div>
@@ -246,7 +348,9 @@ const categories = ref<string[]>([])
 // Featured items organized by sections
 const featuredItems = ref({
   section1: [] as InventoryItem[],
-  section2: [] as InventoryItem[]
+  section2: [] as InventoryItem[],
+  section3: [] as InventoryItem[],
+  section4: [] as InventoryItem[]
 })
 
 // Computed properties
@@ -271,7 +375,9 @@ const filteredItems = computed(() => {
   // Exclude items that are already featured
   const featuredItemIds = [
     ...featuredItems.value.section1.map(item => item.itemId),
-    ...featuredItems.value.section2.map(item => item.itemId)
+    ...featuredItems.value.section2.map(item => item.itemId),
+    ...featuredItems.value.section3.map(item => item.itemId),
+    ...featuredItems.value.section4.map(item => item.itemId)
   ]
   
   return items.filter(item => !featuredItemIds.includes(item.itemId))
@@ -290,37 +396,44 @@ const addToFeatured = (item: InventoryItem) => {
   // Determine which section to add to (whichever has fewer items)
   const section1Count = featuredItems.value.section1.length
   const section2Count = featuredItems.value.section2.length
+  const section3Count = featuredItems.value.section3.length
+  const section4Count = featuredItems.value.section4.length
   
-  if (section1Count < 12 && section1Count <= section2Count) {
-    if (section1Count === 12) {
-      toast.warning('Section 1 is full. Please remove an item first.')
-      return
-    }
-    
-    const newItem = {
-      ...item,
-      landing_page_section: 1,
-      landing_page_order: section1Count + 1
-    }
-    
+  // Find the section with the fewest items
+  const sectionCounts = [
+    { section: 1, count: section1Count },
+    { section: 2, count: section2Count },
+    { section: 3, count: section3Count },
+    { section: 4, count: section4Count }
+  ]
+  
+  const targetSection = sectionCounts.reduce((min, current) => 
+    current.count < min.count ? current : min
+  )
+  
+  if (targetSection.count >= 12) {
+    toast.warning('All sections are full. Please remove items first.')
+    return
+  }
+  
+  const newItem = {
+    ...item,
+    landing_page_section: targetSection.section,
+    landing_page_order: targetSection.count + 1
+  }
+  
+  if (targetSection.section === 1) {
     featuredItems.value.section1.push(newItem)
     toast.success(`Added ${item.itemName} to Section 1`)
-  } else if (section2Count < 12) {
-    if (section2Count === 12) {
-      toast.warning('Section 2 is full. Please remove an item first.')
-      return
-    }
-    
-    const newItem = {
-      ...item,
-      landing_page_section: 2,
-      landing_page_order: section2Count + 1
-    }
-    
+  } else if (targetSection.section === 2) {
     featuredItems.value.section2.push(newItem)
     toast.success(`Added ${item.itemName} to Section 2`)
-  } else {
-    toast.warning('Both sections are full. Please remove items first.')
+  } else if (targetSection.section === 3) {
+    featuredItems.value.section3.push(newItem)
+    toast.success(`Added ${item.itemName} to Section 3`)
+  } else if (targetSection.section === 4) {
+    featuredItems.value.section4.push(newItem)
+    toast.success(`Added ${item.itemName} to Section 4`)
   }
 }
 
@@ -345,6 +458,26 @@ const removeFromFeatured = (item: InventoryItem, section: number) => {
       })
       toast.success(`Removed ${item.itemName} from Section 2`)
     }
+  } else if (section === 3) {
+    const index = featuredItems.value.section3.findIndex(i => i.itemId === item.itemId)
+    if (index > -1) {
+      featuredItems.value.section3.splice(index, 1)
+      // Update order for remaining items
+      featuredItems.value.section3.forEach((item, idx) => {
+        item.landing_page_order = idx + 1
+      })
+      toast.success(`Removed ${item.itemName} from Section 3`)
+    }
+  } else if (section === 4) {
+    const index = featuredItems.value.section4.findIndex(i => i.itemId === item.itemId)
+    if (index > -1) {
+      featuredItems.value.section4.splice(index, 1)
+      // Update order for remaining items
+      featuredItems.value.section4.forEach((item, idx) => {
+        item.landing_page_order = idx + 1
+      })
+      toast.success(`Removed ${item.itemName} from Section 4`)
+    }
   }
 }
 
@@ -356,6 +489,14 @@ const updateOrder = (section: number) => {
     })
   } else if (section === 2) {
     featuredItems.value.section2.forEach((item, idx) => {
+      item.landing_page_order = idx + 1
+    })
+  } else if (section === 3) {
+    featuredItems.value.section3.forEach((item, idx) => {
+      item.landing_page_order = idx + 1
+    })
+  } else if (section === 4) {
+    featuredItems.value.section4.forEach((item, idx) => {
       item.landing_page_order = idx + 1
     })
   }
@@ -377,6 +518,18 @@ const saveFeaturedItems = async () => {
         itemId: item.itemId,
         featured_on_landing: true,
         landing_page_section: 2,
+        landing_page_order: item.landing_page_order
+      })),
+      ...featuredItems.value.section3.map(item => ({
+        itemId: item.itemId,
+        featured_on_landing: true,
+        landing_page_section: 3,
+        landing_page_order: item.landing_page_order
+      })),
+      ...featuredItems.value.section4.map(item => ({
+        itemId: item.itemId,
+        featured_on_landing: true,
+        landing_page_section: 4,
         landing_page_order: item.landing_page_order
       }))
     ]
@@ -413,6 +566,8 @@ const loadFeaturedItems = async () => {
       if (data.success) {
         featuredItems.value.section1 = data.data.section1 || []
         featuredItems.value.section2 = data.data.section2 || []
+        featuredItems.value.section3 = data.data.section3 || []
+        featuredItems.value.section4 = data.data.section4 || []
       }
     }
   } catch (error) {

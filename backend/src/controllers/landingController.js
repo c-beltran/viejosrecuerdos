@@ -39,6 +39,16 @@ const inventoryService = require('../services/inventoryServiceSupabase');
  *                       description: Items for second carousel (12 items max)
  *                       items:
  *                         $ref: '#/components/schemas/InventoryItem'
+ *                     section3:
+ *                       type: array
+ *                       description: Items for third carousel (12 items max)
+ *                       items:
+ *                         $ref: '#/components/schemas/InventoryItem'
+ *                     section4:
+ *                       type: array
+ *                       description: Items for fourth carousel (12 items max)
+ *                       items:
+ *                         $ref: '#/components/schemas/InventoryItem'
  *       500:
  *         description: Internal server error
  *         content:
@@ -101,8 +111,8 @@ const getFeaturedItems = async (req, res) => {
  *                       description: Whether this item should be featured
  *                     landing_page_section:
  *                       type: integer
- *                       enum: [1, 2]
- *                       description: Which carousel section (1 or 2)
+ *                       enum: [1, 2, 3, 4]
+ *                       description: Which carousel section (1, 2, 3, or 4)
  *                     landing_page_order:
  *                       type: integer
  *                       minimum: 1
@@ -160,12 +170,12 @@ const updateFeaturedItems = async (req, res) => {
       }
       
       if (item.featured_on_landing) {
-        if (!item.landing_page_section || ![1, 2].includes(item.landing_page_section)) {
-          return res.status(400).json({
-            success: false,
-            error: 'Featured items must have landing_page_section set to 1 or 2'
-          });
-        }
+                 if (!item.landing_page_section || ![1, 2, 3, 4].includes(item.landing_page_section)) {
+           return res.status(400).json({
+             success: false,
+             error: 'Featured items must have landing_page_section set to 1, 2, 3, or 4'
+           });
+         }
         
         if (!item.landing_page_order || item.landing_page_order < 1 || item.landing_page_order > 12) {
           return res.status(400).json({
