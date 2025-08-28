@@ -33,6 +33,14 @@
     animation-delay: 0.75s; /* Stagger the animations */
 }
 
+/* Ensure logo maintains transparency */
+#sparkle-wrapper img {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    mix-blend-mode: multiply;
+    object-fit: contain;
+}
+
 @keyframes sparkle {
     0% { transform: scale(0.5) translate(-100px, -50px); opacity: 0; }
     25% { opacity: 1; }
